@@ -7,7 +7,9 @@
 CREATE EXTENSION IF NOT EXISTS postgis;
 
 -- 2. ENUMS
-CREATE TYPE lead_status AS ENUM ('NEW', 'QUALIFIED', 'CONVERTED', 'REJECTED');
+CREATE TYPE lead_status AS ENUM ('NEW', 'QUALIFIED', 'CONVERTED', 'REJECTED', 'DRIP');
+CREATE TYPE campaign_status AS ENUM ('ACTIVE', 'PAUSED', 'COMPLETED', 'CANCELLED');
+CREATE TYPE campaign_channel AS ENUM ('EMAIL', 'SMS', 'PHONE', 'MULTI');
 CREATE TYPE order_status AS ENUM ('PENDING', 'CREDIT_APPROVED', 'PAID', 'SHIPPED', 'DELIVERED', 'CANCELLED');
 CREATE TYPE geofence_status AS ENUM ('INSIDE', 'OUTSIDE');
 
@@ -25,8 +27,12 @@ CREATE TABLE leads (
     -- PostGIS Point for spatial queries (Latitude, Longitude)
     location GEOGRAPHY(POINT, 4326), 
     geofence_status geofence_status DEFAULT 'OUTSIDE',
+    business_type TEXT, -- e.g., 'Bakery', 'Industrial Bakery', 'Bagel Chain'
+    products_of_interest TEXT[], -- e.g., '{"Sesame", "Raisins", "Cinnamon"}'
     sentiment_score NUMERIC(3, 2) DEFAULT 0.5, -- 0.0 to 1.0 (LLM derived)
     status lead_status DEFAULT 'NEW',
+    last_contact_date TIMESTAMPTZ, -- Date of most recent outreach
+    assigned_rep TEXT, -- Name or ID of the assigned human sales rep
     downstream_customer_profile TEXT, -- Notes on who their customers are
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
@@ -67,10 +73,40 @@ CREATE TABLE call_interactions (
     created_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Campaigns: Drip campaign tracking for unconverted leads
+CREATE TABLE campaigns (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    lead_id UUID REFERENCES leads(id),
+    campaign_type TEXT NOT NULL DEFAULT 'DRIP', -- 'DRIP', 'PROMO', 'RE-ENGAGEMENT'
+    channel campaign_channel DEFAULT 'EMAIL',
+    status campaign_status DEFAULT 'ACTIVE',
+    next_outreach_date TIMESTAMPTZ,
+    outreach_count INT DEFAULT 0,
+    last_outreach_date TIMESTAMPTZ,
+    notes TEXT, -- e.g., 'Interested in sesame, follow up with pricing'
+    created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Drivers: Delivery personnel
+CREATE TABLE drivers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    full_name TEXT NOT NULL,
+    phone_number TEXT UNIQUE NOT NULL,
+    email TEXT,
+    license_number TEXT,
+    is_available BOOLEAN DEFAULT TRUE,
+    max_weight_capacity DECIMAL(10, 2) DEFAULT 2500.00, -- lbs
+    assigned_vehicle_id TEXT,
+    territory TEXT, -- e.g., 'Western Long Island'
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
 -- TruckRoutes: Logistics planning
 CREATE TABLE truck_routes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    driver_name TEXT,
+    driver_id UUID REFERENCES drivers(id),
+    driver_name TEXT, -- Denormalized for quick access
     vehicle_id TEXT,
     departure_time TIMESTAMPTZ,
     route_status TEXT DEFAULT 'PLANNING', -- 'PLANNING', 'IN_TRANSIT', 'COMPLETED'
@@ -112,6 +148,10 @@ CREATE INDEX idx_leads_location ON leads USING GIST (location);
 CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_leads_phone ON leads(phone_number);
 CREATE INDEX idx_credit_accounts_customer ON credit_accounts(customer_id);
+CREATE INDEX idx_campaigns_lead ON campaigns(lead_id);
+CREATE INDEX idx_campaigns_status ON campaigns(status);
+CREATE INDEX idx_campaigns_next_outreach ON campaigns(next_outreach_date);
+CREATE INDEX idx_drivers_available ON drivers(is_available);
 
 -- 5. SCALABILITY EXPLANATION (POSTGIS)
 /*

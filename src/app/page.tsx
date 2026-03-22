@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { mockLeads, mockOrders, Lead, Order } from '../data/mockData';
 import {
   MapPin, Package, Truck, TrendingUp, AlertCircle, Phone,
-  CheckCircle2, History, X, Navigation, Inbox, Calendar, LayoutDashboard, Users, Map as MapIcon, Settings, Loader2
+  CheckCircle2, History, X, Navigation, Inbox, Calendar, LayoutDashboard, Users, Map as MapIcon, Settings, Loader2, ShieldAlert, Ban
 } from 'lucide-react';
 
 const HQ = { lat: 40.7265, lng: -73.7025 };
@@ -21,7 +21,14 @@ function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * c;
 }
 
-const keywords = ['Sesame', 'Raisins', 'Chilies', 'Cinnamon', 'Poppy', 'Nuts', 'Dried Fruits', 'Walnuts'];
+// Estimate order dollar amount from weight (avg $3/lb for wholesale nuts/seeds/spices)
+function estimateOrderAmount(lead: Lead): number {
+  const primaryWeight = parseInt(lead.favoredProduct.match(/(\d+)/)?.[0] || '50');
+  const secondaryWeight = parseInt(lead.secondaryProduct.match(/(\d+)/)?.[0] || '25');
+  return (primaryWeight + secondaryWeight) * 3;
+}
+
+const keywords = ['Sesame', 'Raisins', 'Chilies', 'Cinnamon', 'Poppy', 'Nuts', 'Dried Fruits', 'Walnuts', 'Almonds', 'Hazelnuts', 'Cashews'];
 const negativeKeywords = ['Price', '$2.50'];
 
 function HighlightedText({ text }: { text: string }) {
@@ -45,13 +52,13 @@ export default function WholesaleDashboard() {
   const [leads, setLeads] = useState<Lead[]>(mockLeads);
   const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [isCalling, setIsCalling] = useState(false);
-  const [callPhase, setCallPhase] = useState<'idle' | 'connecting' | 'streaming' | 'calculating' | 'summary'>('idle');
+  const [callPhase, setCallPhase] = useState<'idle' | 'connecting' | 'streaming' | 'calculating' | 'summary' | 'credit_block'>('idle');
   const [transcription, setTranscription] = useState<{ role: 'ai' | 'customer'; text: string }[]>([]);
   const [activeLeadId, setActiveLeadId] = useState<string | null>(null);
   const [showEscalation, setShowEscalation] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [highMarginOnly, setHighMarginOnly] = useState(false);
-  const [lastCallOutcome, setLastCallOutcome] = useState<{ lead: Lead; status: string; extraction: string } | null>(null);
+  const [lastCallOutcome, setLastCallOutcome] = useState<{ lead: Lead; status: string; extraction: string; creditBlocked?: boolean; creditDetails?: { limit: number; outstanding: number; orderAmount: number } } | null>(null);
   const [showTranscriptAudit, setShowTranscriptAudit] = useState(false);
   const [dialingName, setDialingName] = useState('');
   const [isNegativeSentiment, setIsNegativeSentiment] = useState(false);
@@ -60,7 +67,9 @@ export default function WholesaleDashboard() {
   const [isTakenOver, setIsTakenOver] = useState(false);
   const isTakenOverRef = useRef(false);
   const [activeTab, setActiveTab] = useState<'incoming' | 'action' | 'drip'>('incoming');
-  const [lastActionTimestamp, setLastActionTimestamp] = useState(0); // For pulsing tab on new escalation
+  const [lastActionTimestamp, setLastActionTimestamp] = useState(0);
+  const [showCreditBanner, setShowCreditBanner] = useState(false);
+  const [creditBannerLead, setCreditBannerLead] = useState('');
 
   useEffect(() => {
     if (toast) {
@@ -110,6 +119,19 @@ export default function WholesaleDashboard() {
     }));
   }, [logisticsOrders]);
 
+  const checkCreditLimit = (lead: Lead): { passed: boolean; limit: number; outstanding: number; orderAmount: number } => {
+    const orderAmount = estimateOrderAmount(lead);
+    if (!lead.creditAccount) {
+      return { passed: true, limit: 0, outstanding: 0, orderAmount };
+    }
+    const { creditLimit, outstandingBalance, isFrozen } = lead.creditAccount;
+    if (isFrozen) {
+      return { passed: false, limit: creditLimit, outstanding: outstandingBalance, orderAmount };
+    }
+    const newTotal = outstandingBalance + orderAmount;
+    return { passed: newTotal <= creditLimit, limit: creditLimit, outstanding: outstandingBalance, orderAmount };
+  };
+
   const handleCall = async (lead: Lead) => {
     if (isCalling) return;
     setIsCalling(true);
@@ -124,6 +146,7 @@ export default function WholesaleDashboard() {
     setShowSentimentBanner(false);
     setIsTakenOver(false);
     isTakenOverRef.current = false;
+    setShowCreditBanner(false);
 
     // Phase 1: Connecting
     await new Promise(r => setTimeout(r, 2000));
@@ -135,32 +158,57 @@ export default function WholesaleDashboard() {
 
     if (lead.name === 'Hempstead Hearth') {
       script = [
-        { role: 'ai', text: 'Hi, this is Ali’s Wholesale. We have a special on bulk Walnuts this week.' },
-        { role: 'customer', text: 'Your walnut price is too high; I’m getting it for $2.50 elsewhere.' },
-        { role: 'ai', text: 'I understand the price concern. I’ll escalate this to my manager, Ali, right away. Thank you.' }
+        { role: 'ai', text: 'Hi, this is Ali\'s Wholesale. We have a special on bulk Walnuts this week.' },
+        { role: 'customer', text: 'Your walnut price is too high; I\'m getting it for $2.50 elsewhere.' },
+        { role: 'ai', text: 'I understand the price concern. I\'ll escalate this to my manager, Ali, right away. Thank you.' }
       ];
       finalStatus = 'Escalated';
     } else if (lead.name === 'The Rolling Pin') {
       script = [
-        { role: 'ai', text: 'Hi, this is Ali’s Wholesale. We noticed your order for The Rolling Pin is overdue. Would you like to restock?' },
-        { role: 'customer', text: 'Finally! I\'ve been waiting for a call. Your last delivery was late and I’m very angry. If this happens again, I’m going to cancel my account!' },
+        { role: 'ai', text: 'Hi, this is Ali\'s Wholesale. We noticed your order for The Rolling Pin is overdue. Would you like to restock?' },
+        { role: 'customer', text: 'Finally! I\'ve been waiting for a call. Your last delivery was late and I\'m very angry. If this happens again, I\'m going to cancel my account!' },
         { role: 'ai', text: 'I am so sorry for the delay. Let me look into that for you right now...' }
       ];
       finalStatus = 'Escalated';
+    } else if (lead.name === 'Old World Bakery') {
+      // Scenario B: Old World Bakery always triggers drip enrollment for demo
+      script = [
+        { role: 'ai', text: 'Hi, this is Ali\'s Wholesale. We\'re in your area tomorrow with great prices on bulk seeds and nuts. Interested in a delivery?' },
+        { role: 'customer', text: 'Not right now, thanks. We\'re fully stocked for the next few weeks. Maybe check back next month?' },
+        { role: 'ai', text: 'No problem at all! I\'ll follow up with you in 30 days. Have a great day!' }
+      ];
+      finalStatus = 'Drip';
+    } else if (lead.name === 'Bellmore Bread House') {
+      // Scenario D: Customer near credit limit - call succeeds but credit check will fail
+      script = [
+        { role: 'ai', text: 'Hi, this is Ali\'s Wholesale. We have fresh Almonds and Hazelnuts available. Can we set up a delivery?' },
+        { role: 'customer', text: 'Yes please! I need 75lb of Almonds and 50lb of Hazelnuts for our new recipe line.' },
+        { role: 'ai', text: 'Great choice! Let me process that order for 75lb Almonds and 50lb Hazelnuts right away.' }
+      ];
+      finalStatus = 'Ready';
     } else {
+      // Randomize between positive outcome, positive outcome variant, and "not interested" (drip)
       const rand = Math.random();
-      if (rand < 0.5) {
+      if (rand < 0.35) {
         script = [
-          { role: 'ai', text: 'Hi, this is Ali’s Wholesale. We’re in your area tomorrow. Do you need a restock?' },
-          { role: 'customer', text: 'Yes! We actually ran out of Sesame seeds. Can you bring 50lb? And let’s add 25lb of Raisins and some Chilies for our spicy loaf.' },
-          { role: 'ai', text: 'Great, we’ll have those Sesame seeds, Raisins, and Chilies with you tomorrow. Thank you!' }
+          { role: 'ai', text: 'Hi, this is Ali\'s Wholesale. We\'re in your area tomorrow. Do you need a restock?' },
+          { role: 'customer', text: 'Yes! We actually ran out of Sesame seeds. Can you bring 50lb? And let\'s add 25lb of Raisins and some Chilies for our spicy loaf.' },
+          { role: 'ai', text: 'Great, we\'ll have those Sesame seeds, Raisins, and Chilies with you tomorrow. Thank you!' }
+        ];
+      } else if (rand < 0.7) {
+        script = [
+          { role: 'ai', text: 'Hi, this is Ali\'s Wholesale. Checking in for your weekly Cinnamon and Poppy seed order.' },
+          { role: 'customer', text: 'Perfect timing. We need 100lb of Cinnamon and let\'s try 50lb of those new Nuts you mentioned.' },
+          { role: 'ai', text: 'Got it. 100lb Cinnamon and 50lb Nuts recorded. We\'ll see you tomorrow. Thank you!' }
         ];
       } else {
+        // Scenario B: Not interested - will be enrolled in drip campaign
         script = [
-          { role: 'ai', text: 'Hi, this is Ali’s Wholesale. Checking in for your weekly Cinnamon and Poppy seed order.' },
-          { role: 'customer', text: 'Perfect timing. We need 100lb of Cinnamon and let\'s try 50lb of those new Nuts you mentioned.' },
-          { role: 'ai', text: 'Got it. 100lb Cinnamon and 50lb Nuts recorded. We’ll see you tomorrow. Thank you!' }
+          { role: 'ai', text: 'Hi, this is Ali\'s Wholesale. We\'re in your area tomorrow with great prices on bulk seeds and nuts. Interested in a delivery?' },
+          { role: 'customer', text: 'Not right now, thanks. We\'re fully stocked for the next few weeks. Maybe check back next month?' },
+          { role: 'ai', text: 'No problem at all! I\'ll follow up with you in 30 days. Have a great day!' }
         ];
+        finalStatus = 'Drip';
       }
     }
 
@@ -181,14 +229,13 @@ export default function WholesaleDashboard() {
         if (isTakenOverRef.current) {
           setIsCalling(false);
           setActiveLeadId(null);
-          return; // Kill the process
+          return;
         }
         await new Promise(r => setTimeout(r, 100));
       }
     }
 
     // Guard: If negative sentiment is detected, do NOT automatically proceed to summary.
-    // This allows the user to manually "Alert Ali" or "Ping Ali".
     if (isNegativeSentimentRef.current && !isTakenOverRef.current) {
       return;
     }
@@ -199,6 +246,50 @@ export default function WholesaleDashboard() {
 
     // Phase 4: Summary Transition
     if (!isTakenOverRef.current) {
+      // Credit limit check for successful calls
+      if (finalStatus === 'Ready') {
+        const creditCheck = checkCreditLimit(lead);
+        if (!creditCheck.passed) {
+          // Credit limit exceeded - block order and escalate
+          setCallPhase('credit_block');
+          setShowCreditBanner(true);
+          setCreditBannerLead(lead.name);
+          setLastCallOutcome({
+            lead,
+            status: 'Escalated',
+            extraction: `${lead.favoredProduct} + ${lead.secondaryProduct}`,
+            creditBlocked: true,
+            creditDetails: {
+              limit: creditCheck.limit,
+              outstanding: creditCheck.outstanding,
+              orderAmount: creditCheck.orderAmount,
+            }
+          });
+          setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: 'Escalated' } : l));
+          setLastActionTimestamp(Date.now());
+          setIsCalling(false);
+          setActiveLeadId(null);
+          return;
+        }
+      }
+
+      // Handle drip campaign enrollment
+      if (finalStatus === 'Drip') {
+        setCallPhase('summary');
+        const nextDate = new Date();
+        nextDate.setDate(nextDate.getDate() + 30);
+        setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: 'Drip', nextContactDate: nextDate.toISOString().split('T')[0] } : l));
+        setLastCallOutcome({
+          lead,
+          status: 'Drip',
+          extraction: 'Not interested — enrolled in 30-day drip campaign'
+        });
+        setToast(`${lead.name} enrolled in Drip Campaign`);
+        setIsCalling(false);
+        setActiveLeadId(null);
+        return;
+      }
+
       setCallPhase('summary');
       const isFollowUp = (finalStatus as string) === 'Follow-up';
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: finalStatus, nextContactDate: isFollowUp ? 'In 30 days' : undefined } : l));
@@ -219,7 +310,7 @@ export default function WholesaleDashboard() {
       city: lead.city,
       lat: lead.lat,
       lng: lead.lng,
-      route: lead.city === 'Mineola' ? 'Mineola Loop' : 'Garden City Loop',
+      route: lead.city === 'Mineola' ? 'Mineola Loop' : lead.city === 'Garden City' ? 'Garden City Loop' : `${lead.city} Loop`,
       status: 'Ready'
     };
     setOrders(prev => [...prev, newOrder]);
@@ -228,7 +319,7 @@ export default function WholesaleDashboard() {
   };
 
   const handleRouteLead = (orderId: string, city: string) => {
-    const routeName = city === 'Mineola' ? 'Mineola Loop' : 'Garden City Loop';
+    const routeName = city === 'Mineola' ? 'Mineola Loop' : city === 'Garden City' ? 'Garden City Loop' : `${city} Loop`;
     if (orderId.startsWith('LOD-')) {
       const leadId = orderId.replace('LOD-', '');
       const lead = leads.find(l => l.id === leadId);
@@ -255,7 +346,7 @@ export default function WholesaleDashboard() {
       'Not Interested': { bg: 'bg-zinc-50', dot: 'bg-zinc-300', text: 'text-zinc-400', label: 'DECLINED' },
       'Drip': { bg: 'bg-blue-50', dot: 'bg-blue-500', text: 'text-blue-700', label: 'FOLLOW UP' },
     };
-    const c = map[status];
+    const c = map[status] || map['Incoming Queue'];
     return (
       <div className={`${c.bg} ${c.text} px-3 py-1 rounded-full border border-zinc-200/50 flex items-center text-[8px] font-black tracking-widest`}>
         <div className={`w-1 h-1 ${c.dot} rounded-full mr-2`} /> {labelOverride || c.label}
@@ -297,15 +388,22 @@ export default function WholesaleDashboard() {
       <div className="flex-1 flex flex-col relative">
         {showEscalation && (
           <div className="absolute top-0 inset-x-0 bg-red-600 text-white p-4 z-50 flex justify-between items-center shadow-xl animate-in slide-in-from-top duration-300">
-            <span className="font-black text-[10px] tracking-widest uppercase italic">[ ⚠️ ESCALATE TO ALI ]: Hempstead Hearth - Pricing Conflict Detected</span>
+            <span className="font-black text-[10px] tracking-widest uppercase italic">[ ESCALATE TO ALI ]: Hempstead Hearth - Pricing Conflict Detected</span>
             <button onClick={() => setShowEscalation(false)} className="bg-zinc-900 px-4 py-2 rounded-lg text-[10px] font-black uppercase">Acknowledge</button>
           </div>
         )}
 
         {showSentimentBanner && (
           <div className="absolute top-0 inset-x-0 bg-rose-600 text-white p-4 z-50 flex justify-between items-center shadow-xl animate-in slide-in-from-top duration-300">
-            <span className="font-black text-[10px] tracking-widest uppercase italic">[ ⚠️ NEGATIVE SENTIMENT ]: {dialingName}</span>
+            <span className="font-black text-[10px] tracking-widest uppercase italic">[ NEGATIVE SENTIMENT ]: {dialingName}</span>
             <button onClick={() => setShowSentimentBanner(false)} className="bg-zinc-900 px-4 py-2 rounded-lg text-[10px] font-black uppercase">Acknowledge</button>
+          </div>
+        )}
+
+        {showCreditBanner && (
+          <div className="absolute top-0 inset-x-0 bg-orange-600 text-white p-4 z-50 flex justify-between items-center shadow-xl animate-in slide-in-from-top duration-300">
+            <span className="font-black text-[10px] tracking-widest uppercase italic">[ CREDIT LIMIT EXCEEDED ]: {creditBannerLead} - Order blocked, escalated to Ali</span>
+            <button onClick={() => setShowCreditBanner(false)} className="bg-zinc-900 px-4 py-2 rounded-lg text-[10px] font-black uppercase">Acknowledge</button>
           </div>
         )}
 
@@ -365,8 +463,19 @@ export default function WholesaleDashboard() {
                         <div className="bg-rose-50 border border-rose-100 p-2 rounded-lg">
                           <p className="text-[10px] font-bold text-rose-700 flex items-center italic">
                             <AlertCircle size={10} className="mr-1.5" /> 
-                            {lead.name === 'Hempstead Hearth' ? 'Price Conflict Detected - Intervention Required' : lead.hasNegativeSentiment ? 'Negative Sentiment - Urgent Handoff' : 'Escalated for Manual Review'}
+                            {lead.name === 'Hempstead Hearth' ? 'Price Conflict Detected - Intervention Required' : lead.hasNegativeSentiment ? 'Negative Sentiment - Urgent Handoff' : lead.creditAccount && (lead.creditAccount.outstandingBalance / lead.creditAccount.creditLimit) > 0.8 ? 'Credit Limit Exceeded - Order Blocked' : 'Escalated for Manual Review'}
                           </p>
+                        </div>
+                      ) : activeTab === 'drip' ? (
+                        <div className="flex flex-col space-y-1">
+                          <div className="text-[10px] font-bold text-zinc-800 flex items-center">
+                            <span className="text-zinc-400 uppercase text-[8px] mr-2">Predicted Volume</span> {lead.favoredProduct}
+                          </div>
+                          {lead.nextContactDate && (
+                            <div className="text-[9px] text-blue-600 font-bold flex items-center">
+                              <Calendar size={10} className="mr-1" /> Next contact: {lead.nextContactDate}
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <div className="text-[10px] font-bold text-zinc-800 flex items-center">
@@ -409,7 +518,7 @@ export default function WholesaleDashboard() {
                   <div className="space-y-4 animate-in slide-in-from-bottom duration-300">
                     {transcription.map((line, i) => (
                       <div key={i} className={`flex flex-col ${line.role === 'ai' ? 'items-start' : 'items-end'}`}>
-                        <span className="text-[7px] font-black text-zinc-400 uppercase tracking-widest mb-1">{line.role === 'ai' ? 'Agent (Ali’s Wholesale)' : 'Customer Response'}</span>
+                        <span className="text-[7px] font-black text-zinc-400 uppercase tracking-widest mb-1">{line.role === 'ai' ? 'Agent (Ali\'s Wholesale)' : 'Customer Response'}</span>
                         <div className={`p-3 rounded-xl max-w-[85%] text-xs font-medium leading-relaxed ${line.role === 'ai' ? 'bg-blue-50 text-blue-900 border border-blue-100' : 'bg-zinc-50 text-zinc-900 border border-zinc-200'}`}>
                           <HighlightedText text={line.text} />
                         </div>
@@ -435,26 +544,126 @@ export default function WholesaleDashboard() {
                   </div>
                 )}
 
+                {callPhase === 'credit_block' && lastCallOutcome?.creditBlocked && (
+                  <div className="flex flex-col h-full animate-in slide-in-from-bottom duration-500">
+                    <div className="bg-white border-2 border-orange-300 rounded-xl shadow-sm overflow-hidden flex flex-col transition-all">
+                      <div className="p-6 border-b border-orange-200 bg-orange-50 flex justify-between items-center">
+                        <span className="text-sm font-bold text-zinc-900">{lastCallOutcome.lead.name}</span>
+                        <div className="bg-orange-100 text-orange-700 px-3 py-1 rounded-full border border-orange-200 flex items-center text-[8px] font-black tracking-widest">
+                          <Ban size={8} className="mr-1.5" /> CREDIT BLOCKED
+                        </div>
+                      </div>
+                      <div className="p-6 bg-orange-50/50 border-b border-orange-100">
+                        <div className="flex items-center space-x-2 mb-3">
+                          <ShieldAlert size={16} className="text-orange-600" />
+                          <span className="text-[10px] font-black text-orange-700 uppercase tracking-widest">Credit Limit Exceeded</span>
+                        </div>
+                        <p className="text-xs text-zinc-700 leading-relaxed">
+                          This order cannot be processed. The customer&apos;s outstanding balance plus this order exceeds their credit limit.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 divide-x divide-y divide-orange-100">
+                        <div className="p-6">
+                          <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2">Credit Limit</p>
+                          <p className="text-xs font-black text-zinc-900 font-mono">${lastCallOutcome.creditDetails!.limit.toLocaleString()}</p>
+                        </div>
+                        <div className="p-6">
+                          <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2">Outstanding</p>
+                          <p className="text-xs font-black text-rose-600 font-mono">${lastCallOutcome.creditDetails!.outstanding.toLocaleString()}</p>
+                        </div>
+                        <div className="p-6">
+                          <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2">Order Amount</p>
+                          <p className="text-xs font-black text-zinc-900 font-mono">${lastCallOutcome.creditDetails!.orderAmount.toLocaleString()}</p>
+                        </div>
+                        <div className="p-6">
+                          <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2">New Total</p>
+                          <p className="text-xs font-black text-rose-600 font-mono">${(lastCallOutcome.creditDetails!.outstanding + lastCallOutcome.creditDetails!.orderAmount).toLocaleString()}</p>
+                        </div>
+                      </div>
+                      <div className="p-6 bg-orange-50/50 space-y-3">
+                        <button onClick={() => {
+                          setShowEscalation(true);
+                          setToast('Credit issue escalated to Ali for review');
+                          setCallPhase('idle');
+                          setLastCallOutcome(null);
+                        }} className="w-full py-3 bg-orange-600 text-white rounded-lg font-bold text-[10px] tracking-widest uppercase hover:bg-orange-700 transition-all flex items-center justify-center space-x-2">
+                          <ShieldAlert size={12} /> <span>Escalate to Ali for Credit Review</span>
+                        </button>
+                        <button onClick={() => {
+                          setCallPhase('idle');
+                          setLastCallOutcome(null);
+                        }} className="w-full py-2 border border-orange-200 rounded-lg text-[9px] font-black text-orange-600 uppercase tracking-widest bg-white hover:bg-orange-50">
+                          Dismiss
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {callPhase === 'summary' && !showTranscriptAudit && lastCallOutcome && (
                   <div className="flex flex-col h-full animate-in slide-in-from-bottom duration-500">
                     <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden flex flex-col transition-all">
                       <div className="p-6 border-b border-zinc-100 bg-zinc-50/50 flex justify-between items-center">
                         <span className="text-sm font-bold text-zinc-900">{lastCallOutcome.lead.name}</span>
-                        <StatusPill status={lastCallOutcome.status as any} labelOverride={lastCallOutcome.status === 'Ready' ? 'SUCCESS' : lastCallOutcome.status === 'Escalated' ? 'ESCALATE TO ALI' : 'ESCALATION'} />
+                        <StatusPill status={lastCallOutcome.status as any} labelOverride={lastCallOutcome.status === 'Ready' ? 'SUCCESS' : lastCallOutcome.status === 'Drip' ? 'DRIP ENROLLED' : lastCallOutcome.status === 'Escalated' ? 'ESCALATE TO ALI' : 'ESCALATION'} />
                       </div>
-                      <div className="grid grid-cols-2 divide-x divide-y divide-zinc-100">
-                        <div className="p-6"><p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2">Order</p><p className="text-xs font-bold text-zinc-900">{lastCallOutcome.extraction}</p></div>
-                        <div className="p-6"><p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2">Total Payload</p><p className="text-xs font-black text-zinc-900 font-mono">~{parseInt(lastCallOutcome.lead.favoredProduct.match(/(\d+)/)?.[0] || '50') + 25} LBS</p></div>
-                        <div className="p-6"><p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2">Credit Status</p><div className="flex items-center text-xs font-bold text-zinc-900"><CheckCircle2 size={12} className="text-emerald-500 mr-2" /> Verified</div></div>
-                        <div className="p-6"><p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2">Est. Margin</p><p className="text-xs font-bold text-zinc-900 font-mono">22.0%</p></div>
-                      </div>
+                      {lastCallOutcome.status === 'Drip' ? (
+                        <div className="p-6">
+                          <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
+                            <div className="flex items-center space-x-2 mb-3">
+                              <Calendar size={14} className="text-blue-600" />
+                              <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Drip Campaign Enrolled</span>
+                            </div>
+                            <p className="text-xs text-zinc-700 leading-relaxed mb-3">
+                              Customer is not ready to order now. Automatically enrolled in a 30-day follow-up drip campaign.
+                            </p>
+                            <div className="grid grid-cols-2 gap-4 mt-4">
+                              <div>
+                                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Next Outreach</p>
+                                <p className="text-xs font-bold text-blue-700">In 30 days</p>
+                              </div>
+                              <div>
+                                <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Channel</p>
+                                <p className="text-xs font-bold text-blue-700">Phone + Email</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 divide-x divide-y divide-zinc-100">
+                          <div className="p-6"><p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2">Order</p><p className="text-xs font-bold text-zinc-900">{lastCallOutcome.extraction}</p></div>
+                          <div className="p-6"><p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2">Total Payload</p><p className="text-xs font-black text-zinc-900 font-mono">~{parseInt(lastCallOutcome.lead.favoredProduct.match(/(\d+)/)?.[0] || '50') + 25} LBS</p></div>
+                          <div className="p-6">
+                            <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2">Credit Status</p>
+                            {(() => {
+                              const credit = lastCallOutcome.lead.creditAccount;
+                              if (!credit) return <div className="flex items-center text-xs font-bold text-zinc-900"><CheckCircle2 size={12} className="text-emerald-500 mr-2" /> No Account</div>;
+                              const orderAmt = estimateOrderAmount(lastCallOutcome.lead);
+                              const remaining = credit.creditLimit - credit.outstandingBalance - orderAmt;
+                              return (
+                                <div>
+                                  <div className="flex items-center text-xs font-bold text-emerald-700"><CheckCircle2 size={12} className="text-emerald-500 mr-2" /> Verified</div>
+                                  <p className="text-[8px] text-zinc-400 mt-1">${remaining.toLocaleString()} remaining</p>
+                                </div>
+                              );
+                            })()}
+                          </div>
+                          <div className="p-6"><p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-2">Est. Margin</p><p className="text-xs font-bold text-zinc-900 font-mono">22.0%</p></div>
+                        </div>
+                      )}
                       <div className="p-6 bg-zinc-50/50 space-y-4">
-                        {lastCallOutcome.status !== 'Escalated' && (
+                        {lastCallOutcome.status !== 'Escalated' && lastCallOutcome.status !== 'Drip' && (
                           <button onClick={() => { 
                             if (lastCallOutcome.status === 'Ready') handleHandoffToFulfillment(lastCallOutcome.lead);
                             setLastCallOutcome(null); 
                             setCallPhase('idle'); 
                           }} className="w-full py-3 bg-zinc-900 text-white rounded-lg font-bold text-[10px] tracking-widest uppercase hover:bg-zinc-800 transition-all">Acknowledge & Handoff</button>
+                        )}
+                        {lastCallOutcome.status === 'Drip' && (
+                          <button onClick={() => {
+                            setLastCallOutcome(null);
+                            setCallPhase('idle');
+                          }} className="w-full py-3 bg-blue-600 text-white rounded-lg font-bold text-[10px] tracking-widest uppercase hover:bg-blue-700 transition-all">Acknowledge</button>
                         )}
                         <button onClick={() => setShowTranscriptAudit(true)} className="w-full text-[9px] font-black text-zinc-400 uppercase tracking-widest hover:text-zinc-600 transition-all">View Full Transcript</button>
                       </div>
@@ -475,7 +684,7 @@ export default function WholesaleDashboard() {
                         setIsCalling(false);
                         setActiveLeadId(null);
                         setLeads(prev => prev.map(l => l.id === activeLeadId ? { ...l, status: 'Escalated' } : l));
-                        setToast('Call Redirected to Ali’s Live Line');
+                        setToast('Call Redirected to Ali\'s Live Line');
                       }}
                       className="w-full py-4 bg-rose-600 text-white rounded-xl font-bold text-[11px] tracking-widest uppercase hover:bg-rose-700 shadow-xl transition-all flex items-center justify-center space-x-3"
                     >

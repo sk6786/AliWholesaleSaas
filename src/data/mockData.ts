@@ -1,3 +1,9 @@
+export interface CreditAccount {
+  creditLimit: number;
+  outstandingBalance: number;
+  isFrozen: boolean;
+}
+
 export interface Lead {
   id: string;
   name: string;
@@ -15,6 +21,7 @@ export interface Lead {
   status: 'Incoming Queue' | 'Ready' | 'Follow-up' | 'Not Interested' | 'Escalated' | 'Drip';
   nextContactDate?: string;
   hasNegativeSentiment?: boolean;
+  creditAccount?: CreditAccount;
 }
 
 export const mockLeads: Lead[] = [
@@ -32,6 +39,11 @@ export const mockLeads: Lead[] = [
     isWholesaler: false,
     marginPotential: 'Standard',
     status: 'Incoming Queue',
+    creditAccount: {
+      creditLimit: 5000,
+      outstandingBalance: 1200,
+      isFrozen: false,
+    },
   },
   {
     id: '2',
@@ -47,6 +59,11 @@ export const mockLeads: Lead[] = [
     isWholesaler: true,
     marginPotential: 'High',
     status: 'Escalated',
+    creditAccount: {
+      creditLimit: 25000,
+      outstandingBalance: 8000,
+      isFrozen: false,
+    },
   },
   {
     id: '3',
@@ -62,6 +79,11 @@ export const mockLeads: Lead[] = [
     isWholesaler: false,
     marginPotential: 'Standard',
     status: 'Incoming Queue',
+    creditAccount: {
+      creditLimit: 8000,
+      outstandingBalance: 2500,
+      isFrozen: false,
+    },
   },
   {
     id: '4',
@@ -77,6 +99,11 @@ export const mockLeads: Lead[] = [
     isWholesaler: true,
     marginPotential: 'High',
     status: 'Drip',
+    creditAccount: {
+      creditLimit: 15000,
+      outstandingBalance: 3000,
+      isFrozen: false,
+    },
   },
   {
     id: '5',
@@ -93,6 +120,11 @@ export const mockLeads: Lead[] = [
     marginPotential: 'Standard',
     status: 'Incoming Queue',
     hasNegativeSentiment: true,
+    creditAccount: {
+      creditLimit: 3000,
+      outstandingBalance: 500,
+      isFrozen: false,
+    },
   },
   {
     id: '6',
@@ -108,6 +140,31 @@ export const mockLeads: Lead[] = [
     isWholesaler: false,
     marginPotential: 'Standard',
     status: 'Incoming Queue',
+    creditAccount: {
+      creditLimit: 6000,
+      outstandingBalance: 1000,
+      isFrozen: false,
+    },
+  },
+  {
+    id: '7',
+    name: 'Bellmore Bread House',
+    type: 'Bakery',
+    address: '789 Bedford Ave, Bellmore, NY',
+    city: 'Bellmore',
+    lat: 40.6687,
+    lng: -73.5271,
+    favoredProduct: '75lb Almonds',
+    secondaryProduct: '50lb Hazelnuts',
+    monthly_volume_lbs: 350,
+    isWholesaler: false,
+    marginPotential: 'Standard',
+    status: 'Incoming Queue',
+    creditAccount: {
+      creditLimit: 2000,
+      outstandingBalance: 1800,
+      isFrozen: false,
+    },
   },
 ];
 
