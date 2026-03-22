@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        .slide-container { 
+            width: 1280px; 
+            min-height: 720px; 
+            background: #FAFAF9; 
+            display: flex;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            color: #57534E;
+        }
+        .left-column {
+            width: 30%;
+            background: #4D7C0F;
+            padding: 60px 40px 40px; /* reduced bottom & top to save vertical space */
+            display: flex;
+            flex-direction: column;
+        }
+        .right-column {
+            width: 70%;
+            padding: 80px 60px 40px; /* keep top (title padding) at 80px, reduce bottom */
+            display: flex;
+            flex-direction: column;
+        }
+        .section-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: rgba(250, 250, 249, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: auto;
+        }
+        .decorative-line {
+            width: 40px;
+            height: 2px;
+            background: rgba(250, 250, 249, 0.5);
+            margin-top: 20px;
+        }
+        .slide-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: #292524;
+            line-height: 1.3;
+            margin-bottom: 24px; /* reduced spacing */
+            font-weight: 700;
+        }
+        .content-block {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 24px; /* reduced spacing */
+        }
+        .facts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px; /* tightened gap */
+        }
+        .fact-item {
+            background: #F5F5F4;
+            padding: 18px; /* reduced padding */
+            border-left: 4px solid #D97706;
+        }
+        .fact-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: #D97706;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 6px;
+        }
+        .fact-value {
+            font-size: 18px;
+            color: #292524;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        .highlight-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: #292524;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px dashed #D6D3D1;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="left-column">
+            <div class="section-label">
+                Business Context
+                <div class="decorative-line"></div>
+            </div>
+        </div>
+        <div class="right-column">
+            <h2 class="slide-title">Ali's Business Problem Demands Automation, Not More Headcount</h2>
+            
+            <div class="content-block">
+                Ali is a wholesale food distributor selling bulk ingredients to bakeries in Western Long Island. His current operation is constrained by manual cold-calling (10-15 calls/day), no systematic follow-up on leads who say "not now," and disconnected sales-to-delivery handoffs. The solution is not hiring more salespeople — it is building an AI-assisted platform that handles the routine 80% of calls while keeping Ali in control of the strategic 20%.
+            </div>
+
+            <div class="facts-grid">
+                <div class="fact-item">
+                    <div class="fact-label">Service Region</div>
+                    <div class="fact-value">15-mile geofence around Mineola, Long Island</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-label">Target Customers</div>
+                    <div class="fact-value">Bakeries, bagel chains, industrial bakeries</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-label">Products</div>
+                    <div class="fact-value">Bulk seeds, nuts, spices, dried fruits, chilies</div>
+                </div>
+                <div class="fact-item">
+                    <div class="fact-label">Primary Goal</div>
+                    <div class="fact-value">Scale from 10-15 manual calls/day to 50-100 AI-assisted calls/day</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

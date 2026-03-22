@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        .slide-container { 
+            width: 1280px; 
+            min-height: 720px; 
+            background: #FAFAF9; 
+            display: flex;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            color: #57534E;
+        }
+        .left-column {
+            width: 70%;
+            padding: 80px 60px 40px;
+            display: flex;
+            flex-direction: column;
+        }
+        .right-column {
+            width: 30%;
+            background: #D97706;
+            padding: 60px 40px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            text-align: right;
+        }
+        .section-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: rgba(250, 250, 249, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: auto;
+        }
+        .decorative-line {
+            width: 40px;
+            height: 2px;
+            background: rgba(250, 250, 249, 0.5);
+            margin-top: 20px;
+            margin-left: auto;
+        }
+        .slide-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: #292524;
+            line-height: 1.3;
+            margin-bottom: 24px;
+            font-weight: 700;
+        }
+        .content-block {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+        .capabilities-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .capability-item {
+            background: #FFFFFF;
+            border: 1px solid #E7E5E4;
+            border-left: 6px solid #4D7C0F;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .cap-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .cap-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #292524;
+        }
+        .tech-pill {
+            background: #F3F4F6;
+            color: #4D7C0F;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 6px 16px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid #E5E7EB;
+        }
+        .cap-desc {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #57534E;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="left-column">
+            <h2 class="slide-title">The MVP Focuses on Three Core Capabilities</h2>
+            
+            <div class="content-block">
+                The system combines AI sales automation, CRM pipeline management, and logistics orchestration into a single dashboard. This is not a full platform build — it is a focused MVP that addresses Ali's three biggest bottlenecks.
+            </div>
+
+            <div class="capabilities-list">
+                <div class="capability-item">
+                    <div class="cap-header">
+                        <div class="cap-title">AI Sales Engine</div>
+                        <div class="tech-pill">Vapi AI Voice Agent</div>
+                    </div>
+                    <div class="cap-desc">Automated outbound calling with real-time transcript streaming and keyword extraction.</div>
+                </div>
+                
+                <div class="capability-item">
+                    <div class="cap-header">
+                        <div class="cap-title">CRM + Pipeline</div>
+                        <div class="tech-pill">Supabase (PostgreSQL + PostGIS)</div>
+                    </div>
+                    <div class="cap-desc">Lead tracking, drip campaigns, credit checking, and human escalation workflows.</div>
+                </div>
+                
+                <div class="capability-item">
+                    <div class="cap-header">
+                        <div class="cap-title">Logistics</div>
+                        <div class="tech-pill">Google Maps Routing API</div>
+                    </div>
+                    <div class="cap-desc">Territory-based route grouping with truck capacity management and stop optimization.</div>
+                </div>
+            </div>
+        </div>
+        <div class="right-column">
+            <div class="section-label">
+                Solution Overview
+                <div class="decorative-line"></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

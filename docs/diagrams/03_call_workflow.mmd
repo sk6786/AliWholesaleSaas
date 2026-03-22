@@ -1,0 +1,37 @@
+sequenceDiagram
+    participant D as Dashboard
+    participant V as Vapi AI Agent
+    participant L as Lead/Customer
+    participant DB as Supabase
+    participant H as Ali (Human)
+
+    D->>V: Initiate Outbound Call
+    V->>L: "Hi, this is Ali's Wholesale..."
+    
+    alt Scenario A: Interested
+        L->>V: "Yes, I need 100lb Cinnamon"
+        V->>DB: check_inventory("Cinnamon")
+        DB-->>V: In Stock
+        V->>DB: check_credit(lead_id)
+        alt Credit OK
+            DB-->>V: Approved ($3,275 remaining)
+            V->>L: "Order confirmed for tomorrow"
+            V->>DB: create_order()
+            V->>D: Show Summary + Route Assignment
+        else Credit Exceeded
+            DB-->>V: DENIED (over limit)
+            V->>D: Show Credit Block UI
+            D->>H: Escalate for Credit Review
+        end
+    else Scenario B: Not Interested
+        L->>V: "Not right now, check back later"
+        V->>DB: update_status("Drip")
+        V->>DB: create_campaign(30-day follow-up)
+        V->>D: Show Drip Enrollment Card
+    else Scenario C: Angry/Frustrated
+        L->>V: "I'm very angry about the late delivery!"
+        V->>D: Negative Sentiment Detected
+        D->>D: Show Red Alert Banner
+        D->>H: "Alert Ali" Button
+        H->>D: Takes Over Call
+    end

@@ -1,0 +1,24 @@
+stateDiagram-v2
+    [*] --> NEW: Lead Scraped from Google Maps
+    NEW --> QUALIFIED: Inside 15-mi Geofence
+    QUALIFIED --> AI_CALL: Vapi Outbound Call
+    
+    AI_CALL --> CONVERTED: Order Placed
+    AI_CALL --> DRIP: Not Interested
+    AI_CALL --> ESCALATED: Negative Sentiment
+    AI_CALL --> ESCALATED: Credit Limit Exceeded
+    AI_CALL --> ESCALATED: High Volume (>500 lbs)
+    
+    CONVERTED --> ORDER_CREATED: Create Order
+    ORDER_CREATED --> ROUTED: Assign to Truck Route
+    ROUTED --> DELIVERED: Delivery Complete
+    
+    DRIP --> FOLLOW_UP: 30-Day Timer
+    FOLLOW_UP --> AI_CALL: Re-enter Pipeline
+    
+    ESCALATED --> HUMAN_REVIEW: Ali Takes Over
+    HUMAN_REVIEW --> CONVERTED: Deal Closed
+    HUMAN_REVIEW --> REJECTED: Lost Lead
+    
+    DELIVERED --> [*]
+    REJECTED --> [*]

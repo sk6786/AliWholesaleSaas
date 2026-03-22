@@ -1,0 +1,103 @@
+erDiagram
+    LEADS {
+        UUID id PK
+        TEXT business_name
+        TEXT contact_name
+        TEXT phone_number
+        TEXT address
+        TEXT city
+        GEOGRAPHY location
+        TEXT business_type
+        TEXT[] products_of_interest
+        NUMERIC sentiment_score
+        ENUM status
+        TIMESTAMPTZ last_contact_date
+        TEXT assigned_rep
+    }
+
+    CUSTOMERS {
+        UUID id PK
+        UUID lead_id FK
+        TEXT business_name
+        TEXT tax_id
+        TEXT payment_terms
+        BOOLEAN is_multi_location
+    }
+
+    CREDIT_ACCOUNTS {
+        UUID id PK
+        UUID customer_id FK
+        DECIMAL credit_limit
+        DECIMAL outstanding_balance
+        BOOLEAN is_frozen
+        TIMESTAMPTZ last_credit_check
+    }
+
+    CALL_INTERACTIONS {
+        UUID id PK
+        UUID lead_id FK
+        TEXT vapi_call_id
+        TEXT transcript
+        NUMERIC sentiment_score
+        DECIMAL detected_volume_intent
+        BOOLEAN requires_escalation
+        TEXT escalation_reason
+    }
+
+    CAMPAIGNS {
+        UUID id PK
+        UUID lead_id FK
+        TEXT campaign_type
+        ENUM channel
+        ENUM status
+        TIMESTAMPTZ next_outreach_date
+        INT outreach_count
+        TEXT notes
+    }
+
+    ORDERS {
+        UUID id PK
+        UUID customer_id FK
+        UUID truck_route_id FK
+        DECIMAL total_weight_lbs
+        DECIMAL total_amount
+        ENUM status
+        BOOLEAN inventory_checked
+        TEXT payment_method
+    }
+
+    TRUCK_ROUTES {
+        UUID id PK
+        UUID driver_id FK
+        TEXT driver_name
+        TEXT vehicle_id
+        TIMESTAMPTZ departure_time
+        TEXT route_status
+        GEOMETRY optimized_path
+    }
+
+    DRIVERS {
+        UUID id PK
+        TEXT full_name
+        TEXT phone_number
+        BOOLEAN is_available
+        DECIMAL max_weight_capacity
+        TEXT territory
+    }
+
+    DOWNSTREAM_CUSTOMERS {
+        UUID id PK
+        UUID parent_customer_id FK
+        TEXT business_type
+        INT location_count
+        DECIMAL estimated_monthly_consumption
+    }
+
+    LEADS ||--o{ CUSTOMERS : "converts to"
+    LEADS ||--o{ CALL_INTERACTIONS : "has many"
+    LEADS ||--o{ CAMPAIGNS : "enrolled in"
+    CUSTOMERS ||--|| CREDIT_ACCOUNTS : "has one"
+    CUSTOMERS ||--o{ ORDERS : "places"
+    CUSTOMERS ||--o{ DOWNSTREAM_CUSTOMERS : "supplies"
+    ORDERS }o--|| TRUCK_ROUTES : "assigned to"
+    TRUCK_ROUTES }o--|| DRIVERS : "driven by"

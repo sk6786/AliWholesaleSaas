@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        .slide-container { 
+            width: 1280px; 
+            min-height: 720px; 
+            background: #FAFAF9; 
+            display: flex;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            color: #57534E;
+        }
+        .left-column {
+            width: 35%;
+            background: #D97706;
+            padding: 80px 40px;
+            display: flex;
+            flex-direction: column;
+            color: #FAFAF9;
+        }
+        .right-column {
+            width: 65%;
+            padding: 80px 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .section-label {
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: rgba(250, 250, 249, 0.9);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: auto;
+        }
+        .decorative-line {
+            width: 40px;
+            height: 2px;
+            background: rgba(250, 250, 249, 0.6);
+            margin-top: 20px;
+        }
+        .slide-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: #FAFAF9;
+            line-height: 1.3;
+            margin-bottom: 32px;
+            font-weight: 700;
+        }
+        .content-block {
+            font-size: 16px;
+            line-height: 1.6;
+            color: rgba(250, 250, 249, 0.95);
+        }
+        
+        /* Workflow Diagram Styles */
+        .workflow-section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            color: #292524;
+            margin-bottom: 32px;
+            font-weight: 700;
+        }
+        .phases-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 60px;
+            padding: 20px 0;
+        }
+        .phase-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            z-index: 2;
+        }
+        .phase-pill {
+            background: #292524;
+            color: #FAFAF9;
+            padding: 10px 24px;
+            border-radius: 9999px;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 2px solid #292524;
+        }
+        .phase-desc {
+            font-size: 12px;
+            color: #57534E;
+            text-align: center;
+            max-width: 120px;
+            line-height: 1.4;
+        }
+        .dashed-connector {
+            flex-grow: 1;
+            height: 2px;
+            background-image: linear-gradient(to right, #A8A29E 50%, transparent 50%);
+            background-size: 12px 2px;
+            background-repeat: repeat-x;
+            margin: 0 16px;
+            transform: translateY(-16px);
+        }
+
+        /* Outcomes Grid Styles */
+        .outcomes-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+        .outcome-card {
+            background: #FFFFFF;
+            border: 1px solid #E7E5E4;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .outcome-card.success { border-top: 4px solid #4D7C0F; }
+        .outcome-card.warning { border-top: 4px solid #D97706; }
+        .outcome-card.neutral { border-top: 4px solid #3B82F6; }
+        .outcome-card.danger { border-top: 4px solid #EF4444; }
+        
+        .outcome-condition {
+            font-size: 14px;
+            font-weight: 700;
+            color: #292524;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .outcome-action {
+            font-size: 16px;
+            color: #57534E;
+            line-height: 1.5;
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+        }
+        .arrow-icon {
+            color: #A8A29E;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="left-column">
+            <div class="section-label">
+                AI Sales Engine
+                <div class="decorative-line"></div>
+            </div>
+            <h2 class="slide-title">AI Calls Follow a Four-Phase Workflow with Real-Time Validation</h2>
+            <div class="content-block">
+                Every outbound call progresses through four visible phases in the dashboard. The AI agent performs real-time validation against Supabase during the call — checking inventory availability and credit limits before confirming any order.
+            </div>
+        </div>
+        <div class="right-column">
+            
+            <h3 class="workflow-section-title">Call Progression</h3>
+            <div class="phases-container">
+                <div class="phase-wrapper">
+                    <div class="phase-pill">1. Connecting</div>
+                    <div class="phase-desc">2s telephony delay</div>
+                </div>
+                <div class="dashed-connector"></div>
+                <div class="phase-wrapper">
+                    <div class="phase-pill" style="background: #FAFAF9; color: #292524;">2. Streaming</div>
+                    <div class="phase-desc">Real-time transcript & keywords</div>
+                </div>
+                <div class="dashed-connector"></div>
+                <div class="phase-wrapper">
+                    <div class="phase-pill" style="background: #FAFAF9; color: #292524;">3. Calculating</div>
+                    <div class="phase-desc">Credit check & order estimation</div>
+                </div>
+                <div class="dashed-connector"></div>
+                <div class="phase-wrapper">
+                    <div class="phase-pill">4. Summary</div>
+                    <div class="phase-desc">Outcome card & action buttons</div>
+                </div>
+            </div>
+
+            <h3 class="workflow-section-title">Branching Outcomes</h3>
+            <div class="outcomes-grid">
+                <div class="outcome-card success">
+                    <div class="outcome-condition">Order Placed + Credit OK</div>
+                    <div class="outcome-action">
+                        <span class="arrow-icon">→</span>
+                        <span>Create order and route to fulfillment</span>
+                    </div>
+                </div>
+                <div class="outcome-card warning">
+                    <div class="outcome-condition">Order Placed + Credit Exceeded</div>
+                    <div class="outcome-action">
+                        <span class="arrow-icon">→</span>
+                        <span>Block order and escalate to Ali</span>
+                    </div>
+                </div>
+                <div class="outcome-card neutral">
+                    <div class="outcome-condition">Not Interested</div>
+                    <div class="outcome-action">
+                        <span class="arrow-icon">→</span>
+                        <span>Enroll in 30-day drip campaign</span>
+                    </div>
+                </div>
+                <div class="outcome-card danger">
+                    <div class="outcome-condition">Negative Sentiment Detected</div>
+                    <div class="outcome-action">
+                        <span class="arrow-icon">→</span>
+                        <span>Pause call and alert Ali for takeover</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

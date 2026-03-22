@@ -1,0 +1,28 @@
+flowchart TD
+    A["AI Call<br/>In Progress"] --> B{"Sentiment<br/>Analysis"}
+    
+    B -->|"Score < 0.3<br/>(Frustrated)"| C["PAUSE Call<br/>Red Alert Banner"]
+    B -->|"Score >= 0.3<br/>(Normal)"| D{"Check<br/>Order Value"}
+    
+    C --> E["Alert Ali Button"]
+    E --> F["Human Takes Over"]
+    
+    D -->|"> 500 lbs/month"| G["Flag as<br/>High Volume"]
+    D -->|"<= 500 lbs/month"| H{"Credit<br/>Check"}
+    G --> F
+    
+    H -->|"Over Limit"| I["Block Order<br/>Orange Banner"]
+    H -->|"Within Limit"| J["Auto-Approve<br/>Create Order"]
+    
+    I --> K["Escalate to<br/>Finance/Ali"]
+    
+    J --> L["Route to<br/>Fulfillment"]
+
+    M{"Multi-Location<br/>or Chain?"} --> F
+    D --> M
+
+    style C fill:#E05252,stroke:#B33E3E,color:#fff
+    style F fill:#E05252,stroke:#B33E3E,color:#fff
+    style I fill:#E8A838,stroke:#B8832C,color:#fff
+    style J fill:#52B788,stroke:#3E8A66,color:#fff
+    style L fill:#52B788,stroke:#3E8A66,color:#fff

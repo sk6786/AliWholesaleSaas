@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        .slide-container { 
+            width: 1280px; 
+            min-height: 720px; 
+            background: #FAFAF9; 
+            display: flex;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            color: #57534E;
+        }
+        .left-column {
+            width: 65%;
+            padding: 80px 60px 40px;
+            display: flex;
+            flex-direction: column;
+        }
+        .right-column {
+            width: 35%;
+            background: #D97706;
+            padding: 80px 40px 40px;
+            display: flex;
+            flex-direction: column;
+            color: #FAFAF9;
+        }
+        .slide-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            color: #292524;
+            line-height: 1.3;
+            margin-bottom: 40px;
+            font-weight: 700;
+        }
+        .roi-block {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 2px dashed #D6D3D1;
+        }
+        .roi-block:last-child {
+            border-bottom: none;
+        }
+        .roi-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #4D7C0F;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .roi-text {
+            font-size: 18px;
+            line-height: 1.6;
+        }
+        .roi-highlight {
+            font-size: 24px;
+            font-weight: 700;
+            color: #292524;
+            display: block;
+            margin-top: 12px;
+            background: #F5F5F4;
+            padding: 12px 16px;
+            border-left: 4px solid #4D7C0F;
+        }
+        
+        /* Right Column Styles */
+        .human-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            color: #FAFAF9;
+            margin-bottom: 32px;
+            font-weight: 700;
+        }
+        .human-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: auto;
+        }
+        .human-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .human-task {
+            font-size: 18px;
+            font-weight: 700;
+            color: #FAFAF9;
+        }
+        .human-reason {
+            font-size: 15px;
+            color: rgba(250, 250, 249, 0.9);
+            line-height: 1.4;
+        }
+        .principle-footer {
+            margin-top: auto;
+            padding-top: 24px;
+            border-top: 2px solid rgba(250, 250, 249, 0.3);
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+    </style>
+</head>
+<body>
+    <div class="slide-container">
+        <div class="left-column">
+            <h2 class="slide-title">The Fastest ROI Comes from AI Outbound Calling</h2>
+            
+            <div class="roi-block">
+                <div class="roi-title">1. AI Calling Scale</div>
+                <div class="roi-text">
+                    Ali currently makes 10-15 manual calls per day. With Vapi, the system can make 50-100 calls per day at roughly $0.10-0.15 per minute.
+                    <div class="roi-highlight">
+                        $1,000-$2,000/day new revenue<br>
+                        <span style="font-size: 16px; color: #57534E; font-weight: 400;">from a system costing $50-$100/day to operate (assuming 10% conversion at $200 avg order).</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="roi-block">
+                <div class="roi-title">2. Drip Campaign Compounding</div>
+                <div class="roi-text">
+                    The second-highest ROI comes from drip campaigns. Every "not now" lead that would previously be forgotten is automatically re-engaged in 30 days. Over 6 months, this compounds into a significant pipeline of warm leads that cost nothing to re-contact.
+                </div>
+            </div>
+        </div>
+        <div class="right-column">
+            <h3 class="human-title">What Remains Human-Led</h3>
+            
+            <div class="human-list">
+                <div class="human-item">
+                    <div class="human-task">Angry Customers</div>
+                    <div class="human-reason">Requires human empathy and relationship preservation.</div>
+                </div>
+                <div class="human-item">
+                    <div class="human-task">Credit Overrides</div>
+                    <div class="human-reason">Financial risk requires business judgment.</div>
+                </div>
+                <div class="human-item">
+                    <div class="human-task">Large Deals (>500 lbs)</div>
+                    <div class="human-reason">Requires custom pricing negotiation.</div>
+                </div>
+                <div class="human-item">
+                    <div class="human-task">Multi-Location Chains</div>
+                    <div class="human-reason">Complex, multi-stakeholder sales cycles.</div>
+                </div>
+            </div>
+
+            <div class="principle-footer">
+                "AI handles volume;<br>Ali handles value."
+            </div>
+        </div>
+    </div>
+</body>
+</html>
