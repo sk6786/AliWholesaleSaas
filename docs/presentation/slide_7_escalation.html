@@ -145,7 +145,7 @@
             <h2 class="slide-title">Five Escalation Triggers Keep Ali in Control of Sensitive Situations</h2>
             
             <div class="content-block">
-                The system automatically breaks the automation loop under five conditions, each with a specific UI response. Negative sentiment triggers an immediate red banner and call pause. Credit limit exceeded shows an orange banner with a full financial breakdown. Volume threshold, strategic clients, and complex pricing requests all route to Ali's team for human review.
+                The system uses <strong>inline real-time interrupts</strong> instead of a separate escalation queue. When the AI detects a problem mid-call, Ali sees action buttons directly in the Vapi HUD — no tab-switching, no delay. The customer stays on the line while Ali decides.
             </div>
 
             <div class="triggers-table">
@@ -161,7 +161,7 @@
                         <div class="trigger-pill">Critical</div>
                     </div>
                     <div class="detection-text">Real-time keyword analysis (angry, upset, cancel)</div>
-                    <div class="response-text">Red banner + call pause + "Alert Ali" button</div>
+                    <div class="response-text">AI: "Transferring to my manager" → Live Transfer → Take Over Call button</div>
                 </div>
                 
                 <div class="table-row">
@@ -170,7 +170,7 @@
                         <div class="trigger-pill pill-orange">Financial</div>
                     </div>
                     <div class="detection-text">outstanding + order > limit</div>
-                    <div class="response-text">Orange banner + financial breakdown + escalation</div>
+                    <div class="response-text">Inline Credit Blocked card → Override / Decline buttons</div>
                 </div>
                 
                 <div class="table-row">

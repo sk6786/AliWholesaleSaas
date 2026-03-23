@@ -150,8 +150,15 @@
             <h3 class="flowchart-title">Routing Workflow</h3>
             
             <div class="flow-step">
-                <div class="step-box">1. Territory Grouping</div>
-                <div class="step-desc">Group orders by city/zip into loops</div>
+                <div class="step-box" style="background: #D97706; color: #FAFAF9; border-color: #FAFAF9;">0. Accept Order → Staged</div>
+                <div class="step-desc">Orders staged in Fulfillment tab</div>
+            </div>
+            
+            <div class="flow-connector"></div>
+            
+            <div class="flow-step">
+                <div class="step-box">1. Generate Routes</div>
+                <div class="step-desc">Group staged orders by territory</div>
             </div>
             
             <div class="flow-connector"></div>
@@ -171,8 +178,8 @@
             <div class="flow-connector"></div>
             
             <div class="flow-step">
-                <div class="step-box" style="background: #D97706; color: #FAFAF9; border-color: #FAFAF9;">4. Route Optimization</div>
-                <div class="step-desc">Google Maps API minimizes LIE idle time</div>
+                <div class="step-box" style="background: #D97706; color: #FAFAF9; border-color: #FAFAF9;">4. Refresh</div>
+                <div class="step-desc">Recalculate when new orders added</div>
             </div>
         </div>
     </div>
