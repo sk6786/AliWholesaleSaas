@@ -319,14 +319,13 @@ export default function WholesaleDashboard() {
       setCallPhase('summary');
       setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: finalStatus } : l));
       setLastCallOutcome({ lead, status: finalStatus, extraction: `${lead.favoredProduct} + ${lead.secondaryProduct}` });
-      if (finalStatus === 'Ready') setToast('Order Ready — Accept & Route to Fulfillment');
+      if (finalStatus === 'Ready') setToast('Order Ready — Accept Order');
       setIsCalling(false);
       setActiveLeadId(null);
     }
   };
 
   const handleAcceptAndRoute = (lead: Lead) => {
-    const routeName = lead.city === 'Mineola' ? 'Mineola Loop' : lead.city === 'Garden City' ? 'Garden City Loop' : `${lead.city} Loop`;
     const newOrder: Order = {
       id: `ORD-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
       customerName: lead.name,
@@ -335,17 +334,28 @@ export default function WholesaleDashboard() {
       city: lead.city,
       lat: lead.lat,
       lng: lead.lng,
-      route: routeName,
-      status: 'Routed',
-      stopNumber: 0 // will be recalculated
+      route: '',
+      status: 'Ready',
+      stopNumber: 0
     };
     setOrders(prev => [...prev, newOrder]);
     setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: 'Not Interested' } : l));
-    setRouteRefreshKey(prev => prev + 1); // auto-recalculate stops
-    setToast(`${lead.name} accepted → routed to ${routeName}`);
+    setToast(`${lead.name} accepted → staged for fulfillment`);
     setLastCallOutcome(null);
     setCallPhase('idle');
     setActiveTab('fulfillment');
+  };
+
+  const handleGenerateRoutes = () => {
+    setOrders(prev => prev.map(o => {
+      if (!o.route) {
+        const routeName = o.city === 'Mineola' ? 'Mineola Loop' : o.city === 'Garden City' ? 'Garden City Loop' : `${o.city} Loop`;
+        return { ...o, route: routeName, status: 'Routed' as const };
+      }
+      return o;
+    }));
+    setRouteRefreshKey(prev => prev + 1);
+    setToast('Routes generated — all staged orders assigned to routes');
   };
 
   const handleRouteStagingOrder = (orderId: string, city: string) => {
@@ -485,9 +495,9 @@ export default function WholesaleDashboard() {
                   className={`relative flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center space-x-2 ${activeTab === 'fulfillment' ? 'bg-white shadow-md border border-zinc-200 text-emerald-700' : 'text-zinc-500 hover:text-zinc-700'}`}
                 >
                   <span>Fulfillment</span>
-                  {fulfillmentOrders.length > 0 && (
+                  {orders.length > 0 && (
                     <span className="bg-emerald-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold shadow-sm">
-                      {fulfillmentOrders.length}
+                      {orders.length}
                     </span>
                   )}
                 </button>
@@ -512,6 +522,9 @@ export default function WholesaleDashboard() {
                   <div className="flex items-center text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-6 space-x-3">
                     <div className="flex items-center"><MapPin size={10} className="mr-1" /> {lead.city}</div>
                     <span>•</span> <span>{lead.distance.toFixed(1)} MI</span>
+                    {lead.marginPotential === 'High' && (
+                      <><span>•</span> <span className="text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md border border-amber-200">HIGH MARGIN</span></>
+                    )}
                   </div>
                   <div className="pt-4 border-t border-zinc-100 flex justify-between items-center">
                     <div className="flex-1">
@@ -533,30 +546,41 @@ export default function WholesaleDashboard() {
               {/* FULFILLMENT TAB */}
               {activeTab === 'fulfillment' && (
                 <div className="space-y-6">
-                  {/* Refresh Routes Button */}
+                  {/* Header with stats and action buttons */}
                   <div className="flex justify-between items-center">
                     <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
-                      {routes.length} Route{routes.length !== 1 ? 's' : ''} • {fulfillmentOrders.length} Stop{fulfillmentOrders.length !== 1 ? 's' : ''}
+                      {stagingOrders.length > 0 ? `${stagingOrders.length} Staged` : ''}{stagingOrders.length > 0 && routes.length > 0 ? ' • ' : ''}{routes.length > 0 ? `${routes.length} Route${routes.length !== 1 ? 's' : ''} • ${fulfillmentOrders.length} Stop${fulfillmentOrders.length !== 1 ? 's' : ''}` : ''}{stagingOrders.length === 0 && routes.length === 0 ? '0 Orders' : ''}
                     </p>
-                    <button 
-                      onClick={handleRefreshRoutes}
-                      className="flex items-center space-x-2 px-4 py-2 bg-zinc-900 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-zinc-800 transition-all"
-                    >
-                      <RefreshCw size={12} /> <span>Refresh Routes</span>
-                    </button>
+                    <div className="flex items-center space-x-2">
+                      {routes.length > 0 && (
+                        <button 
+                          onClick={handleRefreshRoutes}
+                          className="flex items-center space-x-2 px-3 py-2 border border-zinc-200 text-zinc-600 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-zinc-100 transition-all"
+                        >
+                          <RefreshCw size={12} /> <span>Refresh</span>
+                        </button>
+                      )}
+                      {stagingOrders.length > 0 && (
+                        <button 
+                          onClick={handleGenerateRoutes}
+                          className="flex items-center space-x-2 px-4 py-2 bg-emerald-600 text-white rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-sm"
+                        >
+                          <Navigation size={12} /> <span>Generate Routes</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {/* Staging Area */}
                   {stagingOrders.length > 0 && (
                     <div className="space-y-3">
-                      <p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest px-2">Staging Area — Awaiting Route Assignment</p>
+                      <p className="text-[8px] font-black text-amber-500 uppercase tracking-widest px-2">Staged Orders — Click Generate Routes to assign</p>
                       {stagingOrders.map(order => (
-                        <div key={order.id} className="bg-white border border-zinc-200 rounded-xl p-4 shadow-sm">
-                          <div className="flex justify-between items-start mb-4">
-                            <div><h4 className="font-bold text-xs text-zinc-900">{order.customerName}</h4><p className="text-[9px] text-zinc-400 font-bold uppercase">{order.city} • {order.items}</p></div>
-                            <div className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full text-[7px] font-black flex items-center"><div className="w-1 h-1 bg-amber-500 rounded-full mr-1.5" /> STAGING</div>
+                        <div key={order.id} className="bg-white border border-amber-200 rounded-xl p-4 shadow-sm">
+                          <div className="flex justify-between items-start">
+                            <div><h4 className="font-bold text-xs text-zinc-900">{order.customerName}</h4><p className="text-[9px] text-zinc-400 font-bold uppercase">{order.city} • {order.items} • {order.weight_lbs} lbs</p></div>
+                            <div className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full text-[7px] font-black flex items-center"><div className="w-1 h-1 bg-amber-500 rounded-full mr-1.5" /> STAGED</div>
                           </div>
-                          <button onClick={() => handleRouteStagingOrder(order.id, order.city)} className="w-full py-2 bg-zinc-100 border border-zinc-200 rounded-lg text-zinc-900 font-bold text-[9px] tracking-widest uppercase flex items-center justify-center space-x-2 hover:bg-zinc-200"><Navigation size={10} /> <span>Route: {order.city}</span></button>
                         </div>
                       ))}
                     </div>
@@ -630,8 +654,8 @@ export default function WholesaleDashboard() {
             </div>
           </section>
 
-          {/* CENTER PANEL: Vapi Logic HUD */}
-          <section className="w-[480px] flex flex-col relative">
+          {/* RIGHT PANEL: Vapi Logic HUD */}
+          <section className="flex-1 flex flex-col relative">
             {callPhase === 'connecting' && (
               <div className="absolute inset-0 bg-white/95 z-20 flex flex-col items-center justify-center p-12 text-center animate-in fade-in duration-300">
                 <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-6 pulsing">
@@ -819,7 +843,7 @@ export default function WholesaleDashboard() {
                       <div className="p-6 bg-zinc-50/50 space-y-4">
                         {lastCallOutcome.status === 'Ready' && (
                           <button onClick={() => handleAcceptAndRoute(lastCallOutcome!.lead)} className="w-full py-3 bg-emerald-600 text-white rounded-lg font-bold text-[10px] tracking-widest uppercase hover:bg-emerald-700 transition-all flex items-center justify-center space-x-2">
-                            <Truck size={12} /> <span>Accept & Route to Fulfillment</span>
+                            <Truck size={12} /> <span>Accept Order</span>
                           </button>
                         )}
                         {lastCallOutcome.status === 'Drip' && (
@@ -848,50 +872,7 @@ export default function WholesaleDashboard() {
             </div>
           </section>
 
-          {/* RIGHT PANEL: Route Map Summary (always visible) */}
-          <section className="flex-1 flex flex-col bg-zinc-50/30">
-            <div className="p-6 border-b border-zinc-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2 text-zinc-900"><Truck size={14} className="text-zinc-400" /> <span className="text-sm font-semibold">Route Overview</span></div>
-                {routes.length > 0 && (
-                  <button onClick={handleRefreshRoutes} className="p-2 rounded-lg border border-zinc-200 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-all" title="Refresh route order">
-                    <RefreshCw size={14} />
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-              {routes.map(route => (
-                <div key={route.name} className="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm">
-                  <div className="bg-zinc-900 px-5 py-3 flex justify-between items-center text-white">
-                    <span className="text-[9px] font-black uppercase italic tracking-widest">{route.name}</span>
-                    <span className={`text-[8px] font-black font-mono ${route.totalWeight > MAX_TRUCK_WEIGHT ? 'text-red-400' : 'opacity-50'}`}>
-                      {route.totalWeight}/{MAX_TRUCK_WEIGHT} LB
-                    </span>
-                  </div>
-                  <div className="p-4 space-y-2">
-                    {route.items.map(order => (
-                      <div key={order.id} className="flex justify-between items-center p-3 rounded-lg bg-zinc-50 border border-zinc-100">
-                        <div className="flex items-center space-x-3">
-                          <span className="w-6 h-6 rounded-lg bg-zinc-900 text-white flex items-center justify-center text-[10px] font-black">{order.stopNumber}</span>
-                          <div>
-                            <span className="font-bold text-xs text-zinc-900">{order.customerName}</span>
-                            <p className="text-[8px] text-zinc-400 font-bold uppercase">{order.weight_lbs} lbs</p>
-                          </div>
-                        </div>
-                        <span className="text-[7px] font-black text-emerald-600 uppercase tracking-widest">Stop {order.stopNumber}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-              {routes.length === 0 && (
-                <div className="h-full flex flex-col items-center justify-center opacity-10 grayscale space-y-4">
-                  <MapIcon size={32} /> <p className="text-[9px] font-black uppercase tracking-widest">No active routes</p>
-                </div>
-              )}
-            </div>
-          </section>
+
         </main>
         )}
 

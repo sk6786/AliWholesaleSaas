@@ -77,7 +77,7 @@ export const mockLeads: Lead[] = [
     secondaryProduct: '50lb Cashews',
     monthly_volume_lbs: 600,
     isWholesaler: false,
-    marginPotential: 'Standard',
+    marginPotential: 'High',
     status: 'Incoming Queue',
     creditAccount: {
       creditLimit: 8000,
@@ -139,7 +139,7 @@ export const mockLeads: Lead[] = [
     secondaryProduct: '50lb Walnuts',
     monthly_volume_lbs: 400,
     isWholesaler: false,
-    marginPotential: 'Standard',
+    marginPotential: 'High',
     status: 'Incoming Queue',
     creditAccount: {
       creditLimit: 6000,
