@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { mockLeads, mockOrders, Lead, Order } from '../data/mockData';
 import {
   MapPin, Package, Truck, TrendingUp, AlertCircle, Phone,
-  CheckCircle2, History, X, Navigation, Inbox, Calendar, LayoutDashboard, Users, Map as MapIcon, Settings, Loader2, ShieldAlert, Ban, RefreshCw, PhoneForwarded
+  CheckCircle2, History, X, Navigation, Inbox, Calendar, LayoutDashboard, Users, Map as MapIcon, Settings, Loader2, ShieldAlert, Ban, RefreshCw, PhoneForwarded, Mail, MessageSquare, Gift, Filter
 } from 'lucide-react';
 
 const HQ = { lat: 40.7265, lng: -73.7025 };
@@ -92,6 +92,8 @@ export default function WholesaleDashboard() {
   const [activeTab, setActiveTab] = useState<'incoming' | 'fulfillment' | 'drip'>('incoming');
   const [routeRefreshKey, setRouteRefreshKey] = useState(0);
   const [sidebarPage, setSidebarPage] = useState<'dashboard' | 'leads' | 'routes' | 'analytics'>('dashboard');
+  const [territoryFilter, setTerritoryFilter] = useState<string>('all');
+  const [dripActions, setDripActions] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (toast) {
@@ -109,8 +111,15 @@ export default function WholesaleDashboard() {
         return false;
       })
       .filter(lead => !highMarginOnly || lead.marginPotential === 'High')
+      .filter(lead => territoryFilter === 'all' || lead.city === territoryFilter)
       .sort((a, b) => a.distance - b.distance);
-  }, [leads, highMarginOnly, activeTab]);
+  }, [leads, highMarginOnly, activeTab, territoryFilter]);
+
+  // Get unique territories for the filter dropdown
+  const territories = useMemo(() => {
+    const cities = [...new Set(leads.map(l => l.city))];
+    return cities.sort();
+  }, [leads]);
 
   // Build fulfillment orders from leads marked as 'Fulfilled' plus any manually added orders
   const fulfillmentOrders = useMemo(() => {
@@ -212,18 +221,26 @@ export default function WholesaleDashboard() {
       finalStatus = 'Ready';
     } else {
       const rand = Math.random();
-      if (rand < 0.35) {
+      if (rand < 0.3) {
         script = [
           { role: 'ai', text: 'Hi, this is Ali\'s Wholesale. We\'re in your area tomorrow. Do you need a restock?' },
           { role: 'customer', text: 'Yes! We actually ran out of Sesame seeds. Can you bring 50lb? And let\'s add 25lb of Raisins and some Chilies for our spicy loaf.' },
           { role: 'ai', text: 'Great, we\'ll have those Sesame seeds, Raisins, and Chilies with you tomorrow. Thank you!' }
         ];
-      } else if (rand < 0.7) {
+      } else if (rand < 0.55) {
         script = [
           { role: 'ai', text: 'Hi, this is Ali\'s Wholesale. Checking in for your weekly Cinnamon and Poppy seed order.' },
           { role: 'customer', text: 'Perfect timing. We need 100lb of Cinnamon and let\'s try 50lb of those new Nuts you mentioned.' },
           { role: 'ai', text: 'Got it. 100lb Cinnamon and 50lb Nuts recorded. We\'ll see you tomorrow. Thank you!' }
         ];
+      } else if (rand < 0.75) {
+        // Follow up later — interested but not ready to buy now (7-day callback)
+        script = [
+          { role: 'ai', text: 'Hi, this is Ali\'s Wholesale. We have great prices on bulk Sesame and Raisins this week. Can we schedule a delivery?' },
+          { role: 'customer', text: 'Hmm, I\'m interested but we\'re still working through our current stock. Can you call me back next week?' },
+          { role: 'ai', text: 'Absolutely! I\'ll schedule a follow-up call for next week. Have a great day!' }
+        ];
+        finalStatus = 'Follow-up' as Lead['status'];
       } else {
         script = [
           { role: 'ai', text: 'Hi, this is Ali\'s Wholesale. We\'re in your area tomorrow with great prices on bulk seeds and nuts. Interested in a delivery?' },
@@ -290,7 +307,24 @@ export default function WholesaleDashboard() {
         }
       }
 
-      // Drip enrollment
+      // Follow-up later — interested but not ready, 7-day callback
+      if (finalStatus === 'Follow-up') {
+        setCallPhase('summary');
+        const nextDate = new Date();
+        nextDate.setDate(nextDate.getDate() + 7);
+        setLeads(prev => prev.map(l => l.id === lead.id ? { ...l, status: 'Drip', nextContactDate: nextDate.toISOString().split('T')[0] } : l));
+        setLastCallOutcome({
+          lead,
+          status: 'Follow-up',
+          extraction: 'Interested but not ready — 7-day follow-up scheduled'
+        });
+        setToast(`${lead.name} → Follow-up in 7 days`);
+        setIsCalling(false);
+        setActiveLeadId(null);
+        return;
+      }
+
+      // Drip enrollment — not interested, 30-day campaign
       if (finalStatus === 'Drip') {
         setCallPhase('summary');
         const nextDate = new Date();
@@ -435,9 +469,22 @@ export default function WholesaleDashboard() {
             <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">{sidebarPage === 'dashboard' ? 'Mineola Hub Cluster' : sidebarPage === 'leads' ? 'All Territories' : sidebarPage === 'routes' ? 'Fleet Operations' : 'Performance Metrics'}</p>
           </div>
           {sidebarPage === 'dashboard' && (
-            <button onClick={() => setHighMarginOnly(!highMarginOnly)} className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest ${highMarginOnly ? 'bg-amber-50 border-amber-200 text-amber-600' : 'border-zinc-200 text-zinc-400'}`}>
-              <TrendingUp size={12} /> <span>High Margins Only</span>
-            </button>
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2 px-3 py-1.5 rounded-lg border border-zinc-200 text-[9px] font-black uppercase tracking-widest text-zinc-500">
+                <Filter size={12} />
+                <select
+                  value={territoryFilter}
+                  onChange={(e) => setTerritoryFilter(e.target.value)}
+                  className="bg-transparent text-[9px] font-black uppercase tracking-widest outline-none cursor-pointer"
+                >
+                  <option value="all">All Territories</option>
+                  {territories.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+              <button onClick={() => setHighMarginOnly(!highMarginOnly)} className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest ${highMarginOnly ? 'bg-amber-50 border-amber-200 text-amber-600' : 'border-zinc-200 text-zinc-400'}`}>
+                <TrendingUp size={12} /> <span>High Margins Only</span>
+              </button>
+            </div>
           )}
         </header>
 
@@ -631,21 +678,48 @@ export default function WholesaleDashboard() {
               {/* DRIP TAB */}
               {activeTab === 'drip' && accessibleLeads.map(lead => (
                 <div key={lead.id} className="bg-white border border-zinc-200 rounded-xl p-5 hover:border-zinc-300 transition-all flex flex-col">
-                  <div className="flex justify-between items-start mb-6">
+                  <div className="flex justify-between items-start mb-4">
                     <h3 className="font-bold text-sm text-zinc-900 tracking-tight">{lead.name}</h3>
                     <StatusPill status={lead.status} />
                   </div>
-                  <div className="flex items-center text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-6 space-x-3">
+                  <div className="flex items-center text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-4 space-x-3">
                     <div className="flex items-center"><MapPin size={10} className="mr-1" /> {lead.city}</div>
                     <span>•</span> <span>{lead.distance.toFixed(1)} MI</span>
                   </div>
-                  <div className="pt-4 border-t border-zinc-100 flex flex-col space-y-1">
+                  <div className="pt-3 border-t border-zinc-100 flex flex-col space-y-2">
                     <div className="text-[10px] font-bold text-zinc-800 flex items-center">
                       <span className="text-zinc-400 uppercase text-[8px] mr-2">Predicted Volume</span> {lead.favoredProduct}
                     </div>
                     {lead.nextContactDate && (
                       <div className="text-[9px] text-blue-600 font-bold flex items-center">
                         <Calendar size={10} className="mr-1" /> Next contact: {lead.nextContactDate}
+                      </div>
+                    )}
+                    {/* Outreach Actions: SMS / Email / Promotion */}
+                    <div className="pt-3 border-t border-zinc-100 flex items-center space-x-2">
+                      <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mr-1">Outreach:</span>
+                      <button
+                        onClick={() => { setDripActions(prev => ({ ...prev, [lead.id]: 'email' })); setToast(`Email sent to ${lead.name}`); }}
+                        className={`flex items-center space-x-1 px-2.5 py-1 rounded-md border text-[8px] font-bold uppercase tracking-wider transition-all ${dripActions[lead.id] === 'email' ? 'bg-blue-50 border-blue-200 text-blue-600' : 'border-zinc-200 text-zinc-500 hover:border-blue-200 hover:text-blue-500'}`}
+                      >
+                        <Mail size={10} /> <span>Email</span>
+                      </button>
+                      <button
+                        onClick={() => { setDripActions(prev => ({ ...prev, [lead.id]: 'sms' })); setToast(`SMS sent to ${lead.name}`); }}
+                        className={`flex items-center space-x-1 px-2.5 py-1 rounded-md border text-[8px] font-bold uppercase tracking-wider transition-all ${dripActions[lead.id] === 'sms' ? 'bg-emerald-50 border-emerald-200 text-emerald-600' : 'border-zinc-200 text-zinc-500 hover:border-emerald-200 hover:text-emerald-500'}`}
+                      >
+                        <MessageSquare size={10} /> <span>SMS</span>
+                      </button>
+                      <button
+                        onClick={() => { setDripActions(prev => ({ ...prev, [lead.id]: 'promo' })); setToast(`Promotion sent to ${lead.name}`); }}
+                        className={`flex items-center space-x-1 px-2.5 py-1 rounded-md border text-[8px] font-bold uppercase tracking-wider transition-all ${dripActions[lead.id] === 'promo' ? 'bg-purple-50 border-purple-200 text-purple-600' : 'border-zinc-200 text-zinc-500 hover:border-purple-200 hover:text-purple-500'}`}
+                      >
+                        <Gift size={10} /> <span>Promo</span>
+                      </button>
+                    </div>
+                    {dripActions[lead.id] && (
+                      <div className="text-[8px] font-bold text-emerald-600 flex items-center">
+                        <CheckCircle2 size={10} className="mr-1" /> {dripActions[lead.id] === 'email' ? 'Email' : dripActions[lead.id] === 'sms' ? 'SMS' : 'Promotion'} sent • {new Date().toLocaleDateString()}
                       </div>
                     )}
                   </div>
