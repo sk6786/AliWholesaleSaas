@@ -98,7 +98,7 @@ The system is organized into five subsystems that communicate through Supabase a
 
 **2. AI Sales Engine** is powered by Vapi, an LLM-driven voice agent platform. When a call is triggered from the dashboard, Vapi executes a structured sales script while performing real-time validation against Supabase. The agent has two key tools: `check_stock` (verifies inventory levels) and `check_credit` (validates the customer's credit account balance against their limit). If both checks pass, the agent confirms the order and creates it in Supabase.
 
-**3. Human-in-the-Loop (HITL)** is triggered automatically under five conditions: volume threshold (>500 lbs/month), strategic client detection (multi-location chains), negative sentiment (score < 0.3), complex pricing requests, and credit limit violations. When triggered, the system pauses the AI call, displays a red or orange alert banner, and provides Ali with a one-click takeover button.
+**3. Human-in-the-Loop (HITL)** uses **inline real-time interrupts** rather than a separate escalation queue. When the AI detects negative sentiment, it tells the customer "Hold on, I'm transferring you to my manager" and presents Ali with a pulsing "Take Over Call" button directly in the Vapi HUD. For credit limit violations, the HUD shows an inline decision card with "Override & Approve" or "Decline" buttons. This ensures Ali addresses issues in real-time while the customer is still on the line, rather than checking a separate tab later.
 
 **4. Logistics and Routing** processes confirmed orders in daily batches. Orders are grouped by zip code clusters within the 15-mile radius, then optimized using the Google Maps Routing API. The system prioritizes "route density" to minimize idle time on the Long Island Expressway (LIE), which is the primary traffic bottleneck in the service area.
 
@@ -181,11 +181,11 @@ The Vapi AI agent follows a structured workflow for every outbound call. The pro
 
 | Call Outcome | Dashboard Action | Lead Status |
 |---|---|---|
-| Customer places order, credit OK | Show order summary + "Acknowledge and Handoff" button | Ready |
-| Customer places order, credit exceeded | Show orange "Credit Limit Exceeded" banner + financial breakdown | Escalated |
+| Customer places order, credit OK | Show order summary + "Accept & Route to Fulfillment" button | Ready |
+| Customer places order, credit exceeded | Inline orange "Credit Blocked" card with Override/Decline buttons | Credit Review |
 | Customer not interested | Show blue "Drip Campaign Enrolled" card with 30-day follow-up date | Drip |
-| Customer angry/frustrated | Show red alert banner + "Alert Ali" button; pause call | Escalated |
-| Price conflict detected | Show escalation banner + "Ping Ali" button | Escalated |
+| Customer angry/frustrated | AI says "transferring to my manager" + "Take Over Call" button | Live Transfer |
+| Price conflict detected | Inline decision card with action buttons | Credit Review |
 
 ---
 
@@ -203,10 +203,10 @@ The Vapi AI agent follows a structured workflow for every outbound call. The pro
 5. The AI confirms: "Got it. 100lb **Cinnamon** and 50lb **Nuts** recorded. We'll see you tomorrow."
 6. The system runs a credit check: $3,275 remaining on a $5,000 limit. Credit status shows green "Verified."
 7. The summary card shows: Order (50lb Sesame Seeds + 25lb Poppy Seeds), Total Payload (~75 lbs), Est. Margin (22.0%).
-8. The Fulfillment panel on the right shows the order staged with a "ROUTE: MINEOLA" button.
-9. Clicking "Acknowledge and Handoff" moves the lead to the fulfillment pipeline.
+8. A green **"Accept & Route to Fulfillment"** button appears.
+9. Clicking it moves the order directly into the **Fulfillment tab** with automatic route assignment, stop number, and weight tracking.
 
-**What This Demonstrates:** End-to-end flow from AI call to order creation to route assignment. Real-time transcript streaming with keyword highlighting. Credit verification with remaining balance display.
+**What This Demonstrates:** End-to-end flow from AI call to order creation to fulfillment routing. Real-time transcript streaming with keyword highlighting. Credit verification with remaining balance display. One-click handoff from sales to delivery.
 
 ### Scenario B: Lead Does Not Buy (Drip Enrollment)
 
@@ -231,13 +231,12 @@ The Vapi AI agent follows a structured workflow for every outbound call. The pro
 1. Click the phone icon on The Rolling Pin's card.
 2. The AI agent opens: "Hi, this is Ali's Wholesale. We noticed your order for The Rolling Pin is overdue. Would you like to restock?"
 3. The customer responds: "Finally! I've been waiting for a call. Your last delivery was late and I'm very **angry**. If this happens again, I'm going to **cancel** my account!"
-4. The system immediately detects negative sentiment keywords ("angry", "cancel") and displays a red "NEGATIVE SENTIMENT" banner across the top of the screen.
-5. The AI call **pauses automatically** and does not proceed to the summary phase.
-6. An "Alert Ali" button appears, allowing Ali to take over the call.
-7. Clicking "Alert Ali" triggers a takeover: the AI stops, and Ali can handle the customer directly.
-8. The lead is moved to the "Action Required" tab with an "ESCALATE" status pill.
+4. The AI detects negative sentiment and **immediately responds to the customer**: "I understand your frustration. Hold on, I'm transferring you to my manager right now."
+5. The Vapi HUD transitions to a pulsing red **"LIVE TRANSFER"** state with a large **"Take Over Call"** button.
+6. Ali clicks "Take Over Call" and is connected directly to the customer — the AI steps aside.
+7. After Ali resolves the issue, the call ends and the lead status is updated.
 
-**What This Demonstrates:** Real-time sentiment detection during AI calls. Automatic call pausing when negative sentiment is detected. Human-in-the-loop escalation with one-click takeover. The AI knows when to stop and hand off to a human.
+**What This Demonstrates:** Real-time sentiment detection during AI calls. The AI handles the escalation gracefully by telling the customer it is transferring them, rather than abruptly pausing. Ali gets a live transfer button directly in the HUD — no separate tab to check, no delay. The customer experience is seamless because they hear "I'm transferring you to my manager" instead of silence.
 
 ### Scenario D: Existing Customer Over Credit Limit
 
@@ -247,26 +246,25 @@ The Vapi AI agent follows a structured workflow for every outbound call. The pro
 1. Click the phone icon on Bellmore Bread House's card.
 2. The AI agent takes the order: "75lb Almonds and 50lb Hazelnuts."
 3. After the call, the system runs a credit check: $1,800 outstanding + $375 new order = $2,175, which exceeds the $2,000 limit.
-4. Instead of the normal summary, the system displays an orange "CREDIT LIMIT EXCEEDED" banner.
-5. A detailed financial breakdown grid shows: Credit Limit ($2,000), Outstanding ($1,800), This Order ($375), New Total ($2,175), and Over By ($175).
-6. An "Escalate to Ali for Credit Review" button allows Ali to decide whether to approve the order or require payment first.
-7. The lead is automatically moved to the "Action Required" tab with an "ESCALATE" status.
+4. The Vapi HUD displays an inline orange **"CREDIT BLOCKED"** card with a detailed financial breakdown: Credit Limit ($2,000), Outstanding ($1,800 in red), Order Amount ($375), New Total ($2,175 in red).
+5. Two action buttons appear directly in the HUD: **"Override & Approve Order"** (green) and **"Decline Order"** (dark).
+6. Ali reviews the numbers and decides on the spot — no tab-switching, no delay.
 
-**What This Demonstrates:** Real-time credit limit checking with financial breakdown. Automatic order blocking when credit is exceeded. Escalation to human decision-maker for financial risk. The system protects Ali from extending too much credit.
+**What This Demonstrates:** Real-time credit limit checking with inline financial breakdown. Ali makes the decision right in the call flow with Override/Decline buttons. No separate "Action Required" queue — the system interrupts Ali in real-time so he can act while the context is fresh. The system protects Ali from extending too much credit while giving him the power to override when appropriate.
 
 ### Scenario E: Delivery Routing
 
 **Setup:** Multiple orders have been confirmed and need to be assigned to delivery routes.
 
 **Flow:**
-1. After confirming orders for Sunrise Artisan Bakery (Mineola) and Long Island Bagel Co. (Garden City), the Fulfillment panel shows both orders in the Staging Area.
-2. Each order card shows the customer name, items, weight, and a "ROUTE: [CITY]" button.
-3. Clicking "ROUTE: MINEOLA" on Sunrise Artisan Bakery creates the Mineola Loop route and assigns the order as Stop #1.
-4. Clicking "ROUTE: GARDEN CITY" on Long Island Bagel Co. creates the Garden City Loop route and assigns it as Stop #1.
-5. As more orders are routed, the system tracks cumulative weight against the 2,500 lb truck capacity.
-6. The Fulfillment panel shows each route with its stops, total weight, and capacity utilization.
+1. After accepting orders via the "Accept & Route to Fulfillment" button, orders automatically flow into the **Fulfillment tab**.
+2. The Fulfillment tab shows a header with route count and stop count (e.g., "1 ROUTE • 2 STOPS") and a **"Refresh Routes"** button.
+3. Orders are automatically grouped by territory (Mineola Loop, Garden City Loop) with stop numbers assigned using a **nearest-neighbor algorithm** starting from HQ.
+4. Each route card shows: stop number, bakery name, items ordered, weight, and the route's cumulative weight against the 2,500 lb truck capacity.
+5. The Route Overview panel on the right mirrors the same information.
+6. When a new bakery is added to a route, Ali clicks **"Refresh Routes"** to recalculate the optimal stop ordering across all stops.
 
-**What This Demonstrates:** Territory-based route grouping (Mineola Loop vs Garden City Loop). Automatic stop number assignment. Truck capacity tracking (2,500 lbs max). The system prevents overloading trucks and organizes deliveries by geographic proximity.
+**What This Demonstrates:** Automatic territory-based route grouping. Nearest-neighbor stop ordering that tells Ali which bakery to visit first. Truck capacity tracking (2,500 lbs max). The Refresh Routes button enables dynamic route recalculation as new orders come in throughout the day.
 
 ---
 
@@ -282,15 +280,21 @@ The system automatically breaks the automation loop and alerts Ali's team under 
 
 | Trigger | Detection Method | UI Response | Rationale |
 |---|---|---|---|
-| **Negative Sentiment** | Keywords: "angry", "upset", "cancel" | Red banner + call pause + "Alert Ali" button | Angry customers need human empathy |
-| **Credit Limit Exceeded** | `outstanding_balance + order_amount > credit_limit` | Orange banner + financial breakdown + escalation button | Financial risk requires human judgment |
+| **Negative Sentiment** | Keywords: "angry", "upset", "cancel" | AI says "transferring to my manager" + Live Transfer with "Take Over Call" button | Angry customers need human empathy; seamless handoff preserves customer experience |
+| **Credit Limit Exceeded** | `outstanding_balance + order_amount > credit_limit` | Inline orange "Credit Blocked" card + Override/Decline buttons | Financial risk requires human judgment; Ali decides on the spot |
 | **Volume Threshold** | `detected_volume_intent > 500 lbs/month` | High value alert to Ali's team | Large deals need custom pricing |
 | **Strategic Client** | `is_multi_location = true` or chain detected | Flag for human review | Multi-location deals are complex |
 | **Complex Pricing** | Customer requests wholesale pricing tiers | Escalation to sales team | AI cannot negotiate custom pricing |
 
-### Why HITL Matters for Ali's Business
+### Why Inline Interrupts Instead of an Action Required Tab
 
-The key insight is that **AI should handle the 80% of calls that are routine, so Ali can focus his time on the 20% that require human judgment**. The system is designed to maximize AI autonomy for standard orders while providing clear, actionable escalation paths for edge cases. This is not about replacing Ali; it is about giving him leverage.
+The key insight is that **AI should handle the 80% of calls that are routine, so Ali can focus his time on the 20% that require human judgment**. A separate "Action Required" tab creates a passive workflow where problems accumulate in a queue. Instead, the system uses **inline real-time interrupts** that appear directly in the Vapi HUD during the call flow. This means:
+
+- **Angry customer?** Ali sees a "Take Over Call" button immediately — the customer hears "I'm transferring you to my manager" and Ali picks up within seconds.
+- **Credit exceeded?** Ali sees the financial breakdown with Override/Decline buttons right in the HUD — he decides before the call context is lost.
+- **Successful order?** One click routes it to Fulfillment with automatic stop ordering.
+
+The dashboard has three tabs: **Incoming** (leads to call), **Fulfillment** (accepted orders with route optimization), and **Drip** (nurture pipeline). No dead-letter queue needed.
 
 ---
 
@@ -462,11 +466,11 @@ A: In the prototype, I mock: AI call transcripts (structured scripts instead of 
 
 **Q: How would you keep this usable for non-technical operations staff?**
 
-A: The dashboard is designed for Ali, not for engineers. Every action is one click: call a lead (phone icon), escalate (Alert Ali button), route an order (Route button). Status is communicated through color-coded pills (green = ready, red = escalate, blue = drip). Financial data is shown in plain numbers, not database fields. The system should feel like a CRM, not a developer tool.
+A: The dashboard is designed for Ali, not for engineers. Every action is one click: call a lead (phone icon), take over a call (Take Over Call button), approve or decline a blocked order (inline buttons), accept and route an order (Accept & Route button). Status is communicated through color-coded pills and inline cards. Financial data is shown in plain numbers, not database fields. Critically, there is no separate "Action Required" tab — all escalations appear as inline interrupts in the Vapi HUD so Ali acts in real-time. The system should feel like a command center, not a developer tool.
 
 **Q: How would credit-limit handling work safely?**
 
-A: The credit check runs server-side (Supabase Edge Function) after the AI call but before order creation. It is a hard gate: if `outstanding_balance + order_amount > credit_limit`, the order is blocked and Ali is notified. The AI agent cannot override this. Ali can manually approve the order after reviewing the financial breakdown, which creates an audit trail in the `call_interactions` table.
+A: The credit check runs server-side (Supabase Edge Function) after the AI call but before order creation. It is a hard gate: if `outstanding_balance + order_amount > credit_limit`, the order is blocked and an inline "Credit Blocked" card appears in the Vapi HUD with the full financial breakdown. Ali sees two buttons: "Override & Approve Order" and "Decline Order." He decides on the spot while the call context is fresh. The AI agent cannot override this — only Ali can. Every override creates an audit trail in the `call_interactions` table.
 
 ---
 
@@ -489,11 +493,11 @@ npm run dev
 
 3. **Demo Scenario B (Drip Enrollment).** Call Old World Bakery. Show: the "not interested" conversation, automatic drip enrollment card, 30-day follow-up date, and the lead appearing in the Drip tab.
 
-4. **Demo Scenario C (Angry Customer).** Call The Rolling Pin. Show: negative sentiment detection, red alert banner, call pause, "Alert Ali" button, and the lead moving to Action Required tab.
+4. **Demo Scenario C (Angry Customer).** Call The Rolling Pin. Show: negative sentiment detection, AI saying "I'm transferring you to my manager," the pulsing red Live Transfer state, and the "Take Over Call" button. Emphasize that the customer hears a natural handoff, not silence.
 
-5. **Demo Scenario D (Credit Limit).** Call Bellmore Bread House. Show: the order conversation, credit limit exceeded banner, financial breakdown grid, and escalation button.
+5. **Demo Scenario D (Credit Limit).** Call Bellmore Bread House. Show: the order conversation, inline orange "Credit Blocked" card with financial breakdown, and the Override/Decline buttons. Emphasize that Ali decides on the spot without switching tabs.
 
-6. **Demo Scenario E (Routing).** After confirming orders, show the Fulfillment panel with territory-based routes (Mineola Loop vs Garden City Loop), stop numbers, and weight tracking against truck capacity.
+6. **Demo Scenario E (Routing).** After accepting orders, switch to the Fulfillment tab. Show: territory-based routes with stop ordering (nearest-neighbor), weight tracking against truck capacity, and the **Refresh Routes** button that recalculates stop order when new bakeries are added.
 
 7. **Show the High Margins Filter.** Toggle "HIGH MARGINS ONLY" to demonstrate lead prioritization for wholesaler customers with higher margin potential.
 
@@ -502,7 +506,8 @@ npm run dev
 ### Key Points to Emphasize During Demo
 
 - The dashboard is a **single-page application** that handles the entire lead-to-delivery lifecycle.
-- Every AI decision has a **human override**: Ali can take over any call, approve blocked orders, or re-prioritize leads.
-- The system **protects Ali financially** by blocking orders that exceed credit limits.
+- Every AI decision has a **human override**: Ali can take over any call via live transfer, approve blocked orders inline, or re-prioritize leads.
+- The system uses **inline interrupts, not a separate queue** — Ali acts in real-time while the customer is still on the line.
+- The system **protects Ali financially** by blocking orders that exceed credit limits with Override/Decline buttons.
 - The **drip campaign** ensures no lead is forgotten after an initial "no."
-- The **routing system** groups deliveries by territory to minimize drive time.
+- The **Fulfillment tab** with **Refresh Routes** tells Ali exactly which stop to visit first and recalculates when new orders come in.

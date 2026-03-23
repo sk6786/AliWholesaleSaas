@@ -1,28 +1,35 @@
 flowchart TD
     A["AI Call<br/>In Progress"] --> B{"Sentiment<br/>Analysis"}
     
-    B -->|"Score < 0.3<br/>(Frustrated)"| C["PAUSE Call<br/>Red Alert Banner"]
+    B -->|"Score < 0.3<br/>(Frustrated)"| C["AI: 'I'm transferring<br/>you to my manager'"]
     B -->|"Score >= 0.3<br/>(Normal)"| D{"Check<br/>Order Value"}
     
-    C --> E["Alert Ali Button"]
-    E --> F["Human Takes Over"]
+    C --> E["LIVE TRANSFER<br/>Take Over Call Button"]
+    E --> F["Ali Takes Over<br/>Live Call"]
     
     D -->|"> 500 lbs/month"| G["Flag as<br/>High Volume"]
     D -->|"<= 500 lbs/month"| H{"Credit<br/>Check"}
     G --> F
     
-    H -->|"Over Limit"| I["Block Order<br/>Orange Banner"]
+    H -->|"Over Limit"| I["Inline Credit Blocked Card<br/>Financial Breakdown"]
     H -->|"Within Limit"| J["Auto-Approve<br/>Create Order"]
     
-    I --> K["Escalate to<br/>Finance/Ali"]
+    I --> K{"Ali Decides<br/>Inline"}
+    K -->|"Override"| J
+    K -->|"Decline"| N["Order Rejected"]
     
-    J --> L["Route to<br/>Fulfillment"]
+    J --> L["Accept & Route<br/>to Fulfillment"]
+    L --> O["Fulfillment Tab<br/>Stop Ordering + Refresh"]
 
     M{"Multi-Location<br/>or Chain?"} --> F
     D --> M
 
     style C fill:#E05252,stroke:#B33E3E,color:#fff
+    style E fill:#E05252,stroke:#B33E3E,color:#fff
     style F fill:#E05252,stroke:#B33E3E,color:#fff
     style I fill:#E8A838,stroke:#B8832C,color:#fff
+    style K fill:#E8A838,stroke:#B8832C,color:#fff
+    style N fill:#888,stroke:#666,color:#fff
     style J fill:#52B788,stroke:#3E8A66,color:#fff
     style L fill:#52B788,stroke:#3E8A66,color:#fff
+    style O fill:#52B788,stroke:#3E8A66,color:#fff

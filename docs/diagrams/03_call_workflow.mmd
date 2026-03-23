@@ -3,7 +3,7 @@ sequenceDiagram
     participant V as Vapi AI Agent
     participant L as Lead/Customer
     participant DB as Supabase
-    participant H as Ali (Human)
+    participant A as Ali (Human)
 
     D->>V: Initiate Outbound Call
     V->>L: "Hi, this is Ali's Wholesale..."
@@ -17,21 +17,26 @@ sequenceDiagram
             DB-->>V: Approved ($3,275 remaining)
             V->>L: "Order confirmed for tomorrow"
             V->>DB: create_order()
-            V->>D: Show Summary + Route Assignment
+            V->>D: Summary + Accept & Route to Fulfillment
+            A->>D: Clicks Accept & Route
+            D->>D: Order flows to Fulfillment tab
         else Credit Exceeded
             DB-->>V: DENIED (over limit)
-            V->>D: Show Credit Block UI
-            D->>H: Escalate for Credit Review
+            V->>D: Inline Credit Blocked Card
+            D->>A: Override & Approve / Decline buttons
+            A->>D: Decides on the spot
         end
     else Scenario B: Not Interested
         L->>V: "Not right now, check back later"
+        V->>L: "No problem! I'll follow up in 30 days."
         V->>DB: update_status("Drip")
         V->>DB: create_campaign(30-day follow-up)
         V->>D: Show Drip Enrollment Card
     else Scenario C: Angry/Frustrated
         L->>V: "I'm very angry about the late delivery!"
-        V->>D: Negative Sentiment Detected
-        D->>D: Show Red Alert Banner
-        D->>H: "Alert Ali" Button
-        H->>D: Takes Over Call
+        V->>V: Detect negative sentiment
+        V->>L: "Hold on, I'm transferring you to my manager."
+        V->>D: LIVE TRANSFER + Take Over Call button
+        A->>D: Clicks Take Over Call
+        A->>L: Ali speaks directly to customer
     end

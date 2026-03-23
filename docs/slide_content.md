@@ -41,35 +41,35 @@ Image: Use the ERD diagram showing all 9 tables with fields and relationships.
 ## Slide 6: AI Calls Follow a Four-Phase Workflow with Real-Time Validation
 Every outbound call progresses through four visible phases in the dashboard: Connecting (2s telephony delay), Streaming (real-time transcript with keyword highlighting), Calculating (credit check and order estimation), and Summary (outcome card with action buttons). The AI agent performs real-time validation against Supabase during the call — checking inventory availability and credit limits before confirming any order.
 
-Call outcomes branch into four paths: (1) Order placed + credit OK → create order and route to fulfillment, (2) Order placed + credit exceeded → block order and escalate to Ali, (3) Not interested → enroll in 30-day drip campaign, (4) Negative sentiment detected → pause call and alert Ali for human takeover.
+Call outcomes branch into four paths: (1) Order placed + credit OK → Accept & Route to Fulfillment with automatic stop ordering, (2) Order placed + credit exceeded → inline Credit Blocked card with Override/Decline buttons, (3) Not interested → enroll in 30-day drip campaign, (4) Negative sentiment detected → AI says "I'm transferring you to my manager" → Live Transfer with Take Over Call button.
 
 Image: Use the call workflow sequence diagram showing all branching scenarios.
 
-## Slide 7: Five Escalation Triggers Keep Ali in Control of Sensitive Situations
-The system automatically breaks the automation loop under five conditions, each with a specific UI response. Negative sentiment (keywords: angry, upset, cancel) triggers an immediate red banner and call pause. Credit limit exceeded shows an orange banner with a full financial breakdown. Volume threshold (>500 lbs/month), strategic clients (multi-location chains), and complex pricing requests all route to Ali's team for human review.
+## Slide 7: Inline Interrupts Replace the Action Queue — Ali Acts in Real-Time
+Instead of routing escalations to a separate "Action Required" tab where problems sit in a queue, the system uses real-time inline interrupts directly in the Vapi HUD. This ensures Ali addresses issues while the customer is still on the line.
 
-| Trigger | Detection | UI Response |
+| Trigger | Detection | Inline Response |
 |---|---|---|
-| Negative Sentiment | Real-time keyword analysis | Red banner + call pause + "Alert Ali" button |
-| Credit Exceeded | outstanding + order > limit | Orange banner + financial breakdown + escalation |
-| Volume > 500 lbs | Detected volume intent | High value alert to Ali |
+| Negative Sentiment | Real-time keyword analysis | AI: "Transferring to my manager" → Take Over Call button |
+| Credit Exceeded | outstanding + order > limit | Inline Credit Blocked card → Override / Decline buttons |
+| Volume > 500 lbs | Detected volume intent | High value alert inline |
 | Strategic Client | Multi-location flag | Flag for human review |
 | Complex Pricing | Custom tier request | Route to sales team |
 
-The principle: AI handles the routine 80%, Ali focuses on the strategic 20%.
+The dashboard has three tabs: Incoming (leads to call), Fulfillment (accepted orders with stop ordering + Refresh Routes), and Drip (nurture pipeline). No dead-letter queue needed — AI handles the routine 80%, Ali focuses on the strategic 20%.
 
 ## Slide 8: All Five Business Scenarios Work End-to-End in the Prototype
 The working prototype demonstrates every scenario from the spec with a live interactive dashboard.
 
-Scenario A (Interested Lead): Sunrise Artisan Bakery → AI call → keyword highlighting → credit verified ($3,275 remaining) → order created → routed to Mineola Loop.
+Scenario A (Interested Lead): Sunrise Artisan Bakery → AI call → keyword highlighting → credit verified ($3,275 remaining) → Accept & Route to Fulfillment → auto-assigned to Mineola Loop with stop number.
 
 Scenario B (Drip Enrollment): Old World Bakery → "not now" response → automatic 30-day drip enrollment → appears in Drip tab with next contact date.
 
-Scenario C (Angry Customer): The Rolling Pin → "angry" keyword detected → red alert banner → call pauses → "Alert Ali" button → human takeover.
+Scenario C (Angry Customer): The Rolling Pin → "angry" keyword detected → AI says "I'm transferring you to my manager" → Live Transfer state → Ali clicks Take Over Call.
 
-Scenario D (Credit Exceeded): Bellmore Bread House → $375 order pushes $1,800 balance over $2,000 limit → orange block banner → financial breakdown → escalation.
+Scenario D (Credit Exceeded): Bellmore Bread House → $375 order pushes $1,800 balance over $2,000 limit → inline Credit Blocked card → Ali clicks Override or Decline on the spot.
 
-Scenario E (Delivery Routing): Orders grouped by territory (Mineola Loop, Garden City Loop) → stop numbers assigned → weight tracked against 2,500 lb truck capacity.
+Scenario E (Delivery Routing): Orders flow into Fulfillment tab after Accept & Route → grouped by territory (Mineola Loop, Garden City Loop) → nearest-neighbor stop ordering → Refresh Routes button recalculates when new bakeries added.
 
 ## Slide 9: Territory-Based Routing Optimizes Deliveries for Long Island Geography
 Instead of complex vehicle routing optimization, the system uses a pragmatic territory-based approach that delivers 80% of the optimization benefit at 10% of the complexity. Orders are grouped by city into territory loops (Mineola Loop, Garden City Loop), checked against truck capacity (2,500 lbs), ordered by nearest-neighbor within each loop, and then optimized via Google Maps API to minimize LIE idle time.
