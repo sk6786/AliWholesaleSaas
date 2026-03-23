@@ -97,8 +97,8 @@ The Vapi agent is configured with dynamic tools to interact with Supabase:
 ### 3.2 Dashboard Design Philosophy: Inline Interrupts over Action Queues
 The dashboard is designed for **Ali** (the human operator), not the AI agent. Rather than routing escalations to a separate "Action Required" tab where problems sit in a queue, the system uses **real-time inline interrupts** directly in the call flow:
 
-1.  **Angry Customer → Live Transfer**: When the AI detects negative sentiment, it tells the customer *"Hold on, I'm transferring you to my manager"* and presents Ali with a pulsing **"Take Over Call"** button in the Vapi HUD. Ali picks up immediately — no tab-switching, no delay.
-2.  **Credit Limit Exceeded → Inline Decision Card**: The HUD shows the financial breakdown (credit limit, outstanding balance, order amount, new total) with two action buttons: **"Override & Approve Order"** or **"Decline Order."** Ali decides on the spot.
+1.  **Angry Customer → Live Transfer**: When the AI detects negative sentiment, it tells the customer *"Hold on, I'm transferring you to my manager"* and presents Ali with a pulsing **"Take Over Call"** button in the AI Sales Agent panel. Ali picks up immediately — no tab-switching, no delay.
+2.  **Credit Limit Exceeded → Inline Decision Card**: The AI Sales Agent panel shows the financial breakdown (credit limit, outstanding balance, order amount, new total) with two action buttons: **"Override & Approve Order"** or **"Decline Order."** Ali decides on the spot.
 3.  **Successful Order → Accept Order → Staged**: Orders are staged in the Fulfillment tab. Ali clicks **"Generate Routes"** to batch-assign territory-based routes with nearest-neighbor stop ordering. A **"Refresh"** button recalculates when new orders are added.
 4.  **Not Interested → Automatic Drip Enrollment**: The AI gracefully ends the call and auto-enrolls the lead into a 30-day follow-up drip campaign.
 

@@ -46,7 +46,7 @@ Call outcomes branch into four paths: (1) Order placed + credit OK → Accept Or
 Image: Use the call workflow sequence diagram showing all branching scenarios.
 
 ## Slide 7: Inline Interrupts Replace the Action Queue — Ali Acts in Real-Time
-Instead of routing escalations to a separate "Action Required" tab where problems sit in a queue, the system uses real-time inline interrupts directly in the Vapi HUD. This ensures Ali addresses issues while the customer is still on the line.
+Instead of routing escalations to a separate "Action Required" tab where problems sit in a queue, the system uses real-time inline interrupts directly in the AI Sales Agent panel. This ensures Ali addresses issues while the customer is still on the line.
 
 | Trigger | Detection | Inline Response |
 |---|---|---|

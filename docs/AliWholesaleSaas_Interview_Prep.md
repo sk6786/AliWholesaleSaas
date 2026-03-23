@@ -98,7 +98,7 @@ The system is organized into five subsystems that communicate through Supabase a
 
 **2. AI Sales Engine** is powered by Vapi, an LLM-driven voice agent platform. When a call is triggered from the dashboard, Vapi executes a structured sales script while performing real-time validation against Supabase. The agent has two key tools: `check_stock` (verifies inventory levels) and `check_credit` (validates the customer's credit account balance against their limit). If both checks pass, the agent confirms the order and creates it in Supabase.
 
-**3. Human-in-the-Loop (HITL)** uses **inline real-time interrupts** rather than a separate escalation queue. When the AI detects negative sentiment, it tells the customer "Hold on, I'm transferring you to my manager" and presents Ali with a pulsing "Take Over Call" button directly in the Vapi HUD. For credit limit violations, the HUD shows an inline decision card with "Override & Approve" or "Decline" buttons. This ensures Ali addresses issues in real-time while the customer is still on the line, rather than checking a separate tab later.
+**3. Human-in-the-Loop (HITL)** uses **inline real-time interrupts** rather than a separate escalation queue. When the AI detects negative sentiment, it tells the customer "Hold on, I'm transferring you to my manager" and presents Ali with a pulsing "Take Over Call" button directly in the AI Sales Agent panel. For credit limit violations, the AI Sales Agent panel shows an inline decision card with "Override & Approve" or "Decline" buttons. This ensures Ali addresses issues in real-time while the customer is still on the line, rather than checking a separate tab later.
 
 **4. Logistics and Routing** processes confirmed orders in daily batches. Orders are grouped by zip code clusters within the 15-mile radius, then optimized using the Google Maps Routing API. The system prioritizes "route density" to minimize idle time on the Long Island Expressway (LIE), which is the primary traffic bottleneck in the service area.
 
@@ -169,7 +169,7 @@ The schema is built on PostgreSQL with PostGIS and uses UUIDs as primary keys fo
 
 ### How the AI Call Works
 
-The Vapi AI agent follows a structured workflow for every outbound call. The process has four phases, each visible in the dashboard's "Vapi Logic HUD" panel:
+The Vapi AI agent follows a structured workflow for every outbound call. The process has four phases, each visible in the dashboard's "AI Sales Agent" panel:
 
 **Phase 1: Connecting (2 seconds).** The system displays a pulsing phone icon with the lead's name. This simulates the telephony connection delay.
 
@@ -197,7 +197,7 @@ The Vapi AI agent follows a structured workflow for every outbound call. The pro
 
 **Flow:**
 1. Click the phone icon on Sunrise Artisan Bakery's card.
-2. The Vapi Logic HUD shows "Connecting..." with a pulsing animation.
+2. The AI Sales Agent shows "Connecting..." with a pulsing animation.
 3. The AI agent opens: "Hi, this is Ali's Wholesale. Checking in for your weekly Cinnamon and Poppy seed order."
 4. The customer responds: "Perfect timing. We need 100lb of **Cinnamon** and let's try 50lb of those new **Nuts** you mentioned." (Keywords highlighted in amber.)
 5. The AI confirms: "Got it. 100lb **Cinnamon** and 50lb **Nuts** recorded. We'll see you tomorrow."
@@ -232,11 +232,11 @@ The Vapi AI agent follows a structured workflow for every outbound call. The pro
 2. The AI agent opens: "Hi, this is Ali's Wholesale. We noticed your order for The Rolling Pin is overdue. Would you like to restock?"
 3. The customer responds: "Finally! I've been waiting for a call. Your last delivery was late and I'm very **angry**. If this happens again, I'm going to **cancel** my account!"
 4. The AI detects negative sentiment and **immediately responds to the customer**: "I understand your frustration. Hold on, I'm transferring you to my manager right now."
-5. The Vapi HUD transitions to a pulsing red **"LIVE TRANSFER"** state with a large **"Take Over Call"** button.
+5. The AI Sales Agent panel transitions to a pulsing red **"LIVE TRANSFER"** state with a large **"Take Over Call"** button.
 6. Ali clicks "Take Over Call" and is connected directly to the customer — the AI steps aside.
 7. After Ali resolves the issue, the call ends and the lead status is updated.
 
-**What This Demonstrates:** Real-time sentiment detection during AI calls. The AI handles the escalation gracefully by telling the customer it is transferring them, rather than abruptly pausing. Ali gets a live transfer button directly in the HUD — no separate tab to check, no delay. The customer experience is seamless because they hear "I'm transferring you to my manager" instead of silence.
+**What This Demonstrates:** Real-time sentiment detection during AI calls. The AI handles the escalation gracefully by telling the customer it is transferring them, rather than abruptly pausing. Ali gets a live transfer button directly in the AI Sales Agent panel — no separate tab to check, no delay. The customer experience is seamless because they hear "I'm transferring you to my manager" instead of silence.
 
 ### Scenario D: Existing Customer Over Credit Limit
 
@@ -246,8 +246,8 @@ The Vapi AI agent follows a structured workflow for every outbound call. The pro
 1. Click the phone icon on Bellmore Bread House's card.
 2. The AI agent takes the order: "75lb Almonds and 50lb Hazelnuts."
 3. After the call, the system runs a credit check: $1,800 outstanding + $375 new order = $2,175, which exceeds the $2,000 limit.
-4. The Vapi HUD displays an inline orange **"CREDIT BLOCKED"** card with a detailed financial breakdown: Credit Limit ($2,000), Outstanding ($1,800 in red), Order Amount ($375), New Total ($2,175 in red).
-5. Two action buttons appear directly in the HUD: **"Override & Approve Order"** (green) and **"Decline Order"** (dark).
+4. The AI Sales Agent panel displays an inline orange **"CREDIT BLOCKED"** card with a detailed financial breakdown: Credit Limit ($2,000), Outstanding ($1,800 in red), Order Amount ($375), New Total ($2,175 in red).
+5. Two action buttons appear directly in the AI Sales Agent panel: **"Override & Approve Order"** (green) and **"Decline Order"** (dark).
 6. Ali reviews the numbers and decides on the spot — no tab-switching, no delay.
 
 **What This Demonstrates:** Real-time credit limit checking with inline financial breakdown. Ali makes the decision right in the call flow with Override/Decline buttons. No separate "Action Required" queue — the system interrupts Ali in real-time so he can act while the context is fresh. The system protects Ali from extending too much credit while giving him the power to override when appropriate.
@@ -262,7 +262,7 @@ The Vapi AI agent follows a structured workflow for every outbound call. The pro
 3. Orders are grouped by territory (Mineola Loop, Garden City Loop) with stop numbers assigned using a **nearest-neighbor algorithm** starting from HQ.
 4. Each route card shows: stop number, bakery name, items ordered, weight, and the route's cumulative weight against the 2,500 lb truck capacity.
 5. When new orders are accepted and staged, Ali clicks **"Refresh"** to recalculate the optimal stop ordering across all stops.
-6. The right panel is exclusively the Vapi Logic HUD — no redundant Route Overview panel.
+6. The right panel is exclusively the AI Sales Agent — no redundant Route Overview panel.
 
 **What This Demonstrates:** Two-phase fulfillment workflow: stage first, then generate routes in batch. Territory-based route grouping with nearest-neighbor stop ordering that tells Ali which bakery to visit first. Truck capacity tracking (2,500 lbs max). The Refresh button enables dynamic route recalculation as new orders come in throughout the day.
 
@@ -288,10 +288,10 @@ The system automatically breaks the automation loop and alerts Ali's team under 
 
 ### Why Inline Interrupts Instead of an Action Required Tab
 
-The key insight is that **AI should handle the 80% of calls that are routine, so Ali can focus his time on the 20% that require human judgment**. A separate "Action Required" tab creates a passive workflow where problems accumulate in a queue. Instead, the system uses **inline real-time interrupts** that appear directly in the Vapi HUD during the call flow. This means:
+The key insight is that **AI should handle the 80% of calls that are routine, so Ali can focus his time on the 20% that require human judgment**. A separate "Action Required" tab creates a passive workflow where problems accumulate in a queue. Instead, the system uses **inline real-time interrupts** that appear directly in the AI Sales Agent panel during the call flow. This means:
 
 - **Angry customer?** Ali sees a "Take Over Call" button immediately — the customer hears "I'm transferring you to my manager" and Ali picks up within seconds.
-- **Credit exceeded?** Ali sees the financial breakdown with Override/Decline buttons right in the HUD — he decides before the call context is lost.
+- **Credit exceeded?** Ali sees the financial breakdown with Override/Decline buttons right in the AI Sales Agent panel — he decides before the call context is lost.
 - **Successful order?** One click stages it in Fulfillment. Ali clicks "Generate Routes" to batch-assign routes with stop ordering.
 
 The dashboard has three tabs: **Incoming** (leads to call), **Fulfillment** (accepted orders with route optimization), and **Drip** (nurture pipeline). No dead-letter queue needed.
@@ -466,11 +466,11 @@ A: In the prototype, I mock: AI call transcripts (structured scripts instead of 
 
 **Q: How would you keep this usable for non-technical operations staff?**
 
-A: The dashboard is designed for Ali, not for engineers. Every action is one click: call a lead (phone icon), take over a call (Take Over Call button), approve or decline a blocked order (inline buttons), accept an order (Accept Order button), batch-generate routes (Generate Routes button). Status is communicated through color-coded pills and inline cards. Financial data is shown in plain numbers, not database fields. Critically, there is no separate "Action Required" tab — all escalations appear as inline interrupts in the Vapi HUD so Ali acts in real-time. The system should feel like a command center, not a developer tool.
+A: The dashboard is designed for Ali, not for engineers. Every action is one click: call a lead (phone icon), take over a call (Take Over Call button), approve or decline a blocked order (inline buttons), accept an order (Accept Order button), batch-generate routes (Generate Routes button). Status is communicated through color-coded pills and inline cards. Financial data is shown in plain numbers, not database fields. Critically, there is no separate "Action Required" tab — all escalations appear as inline interrupts in the AI Sales Agent panel so Ali acts in real-time. The system should feel like a command center, not a developer tool.
 
 **Q: How would credit-limit handling work safely?**
 
-A: The credit check runs server-side (Supabase Edge Function) after the AI call but before order creation. It is a hard gate: if `outstanding_balance + order_amount > credit_limit`, the order is blocked and an inline "Credit Blocked" card appears in the Vapi HUD with the full financial breakdown. Ali sees two buttons: "Override & Approve Order" and "Decline Order." He decides on the spot while the call context is fresh. The AI agent cannot override this — only Ali can. Every override creates an audit trail in the `call_interactions` table.
+A: The credit check runs server-side (Supabase Edge Function) after the AI call but before order creation. It is a hard gate: if `outstanding_balance + order_amount > credit_limit`, the order is blocked and an inline "Credit Blocked" card appears in the AI Sales Agent panel with the full financial breakdown. Ali sees two buttons: "Override & Approve Order" and "Decline Order." He decides on the spot while the call context is fresh. The AI agent cannot override this — only Ali can. Every override creates an audit trail in the `call_interactions` table.
 
 ---
 
@@ -487,7 +487,7 @@ npm run dev
 
 ### Demo Script (Recommended Order)
 
-1. **Show the Dashboard Layout.** Point out the clean two-panel design: left panel (sidebar navigation + lead pipeline with Incoming/Fulfillment/Drip tabs), right panel (Vapi Logic HUD only). Explain why there is no redundant Route Overview panel — all routing lives in the Fulfillment tab.
+1. **Show the Dashboard Layout.** Point out the clean two-panel design: left panel (sidebar navigation + lead pipeline with Incoming/Fulfillment/Drip tabs), right panel (AI Sales Agent only). Explain why there is no redundant Route Overview panel — all routing lives in the Fulfillment tab.
 
 2. **Demo Scenario A (Interested Lead).** Call Sunrise Artisan Bakery. Walk through: connecting animation, transcript streaming with keyword highlighting, credit verification, order summary, and clicking "Accept Order" to stage it in Fulfillment.
 

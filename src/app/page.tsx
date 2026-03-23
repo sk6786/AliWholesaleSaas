@@ -728,7 +728,7 @@ export default function WholesaleDashboard() {
             </div>
           </section>
 
-          {/* RIGHT PANEL: Vapi Logic HUD */}
+          {/* RIGHT PANEL: AI Sales Agent */}
           <section className="flex-1 flex flex-col relative">
             {callPhase === 'connecting' && (
               <div className="absolute inset-0 bg-white/95 z-20 flex flex-col items-center justify-center p-12 text-center animate-in fade-in duration-300">
@@ -742,7 +742,7 @@ export default function WholesaleDashboard() {
 
             <div className="p-6 h-full flex flex-col">
               <div className="flex items-center space-x-2 mb-8 text-blue-500 font-semibold italic text-sm">
-                <CheckCircle2 size={14} /> <span>Vapi Logic HUD</span>
+                <CheckCircle2 size={14} /> <span>AI Sales Agent</span>
               </div>
               <div className="flex-1 overflow-y-auto space-y-4 custom-scrollbar">
                 {/* Transcript Stream */}
