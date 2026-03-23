@@ -41,7 +41,7 @@ Image: Use the ERD diagram showing all 9 tables with fields and relationships.
 ## Slide 6: AI Calls Follow a Four-Phase Workflow with Real-Time Validation
 Every outbound call progresses through four visible phases in the dashboard: Connecting (2s telephony delay), Streaming (real-time transcript with keyword highlighting), Calculating (credit check and order estimation), and Summary (outcome card with action buttons). The AI agent performs real-time validation against Supabase during the call — checking inventory availability and credit limits before confirming any order.
 
-Call outcomes branch into four paths: (1) Order placed + credit OK → Accept Order → staged in Fulfillment → Generate Routes for batch assignment, (2) Order placed + credit exceeded → inline Credit Blocked card with Override/Decline buttons, (3) Not interested → enroll in 30-day drip campaign, (4) Negative sentiment detected → AI says "I'm transferring you to my manager" → Live Transfer with Take Over Call button.
+Call outcomes branch into five paths: (1) Order placed + credit OK → Accept Order → staged in Fulfillment → Generate Routes for batch assignment, (2) Order placed + credit exceeded → inline Credit Blocked card with Override/Decline buttons, (3) Interested but not now → 7-day follow-up callback scheduled, (4) Not interested → enroll in 30-day drip campaign, (5) Negative sentiment detected → AI says "I'm transferring you to my manager" → Live Transfer with Take Over Call button.
 
 Image: Use the call workflow sequence diagram showing all branching scenarios.
 

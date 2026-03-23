@@ -78,6 +78,12 @@ sequenceDiagram
         V->>A: Live Transfer - Take Over Call button
     end
 
+    alt Interested but Not Now
+        L->>V: "Call me back next week"
+        V->>L: "Absolutely! I'll call you back in a week."
+        V->>S: Schedule 7-day follow-up callback
+    end
+
     alt Not Interested
         L->>V: Declines order
         V->>L: "No problem! I'll follow up in 30 days."
@@ -100,7 +106,8 @@ The dashboard is designed for **Ali** (the human operator), not the AI agent. Ra
 1.  **Angry Customer → Live Transfer**: When the AI detects negative sentiment, it tells the customer *"Hold on, I'm transferring you to my manager"* and presents Ali with a pulsing **"Take Over Call"** button in the AI Sales Agent panel. Ali picks up immediately — no tab-switching, no delay.
 2.  **Credit Limit Exceeded → Inline Decision Card**: The AI Sales Agent panel shows the financial breakdown (credit limit, outstanding balance, order amount, new total) with two action buttons: **"Override & Approve Order"** or **"Decline Order."** Ali decides on the spot.
 3.  **Successful Order → Accept Order → Staged**: Orders are staged in the Fulfillment tab. Ali clicks **"Generate Routes"** to batch-assign territory-based routes with nearest-neighbor stop ordering. A **"Refresh"** button recalculates when new orders are added.
-4.  **Not Interested → Automatic Drip Enrollment**: The AI gracefully ends the call and auto-enrolls the lead into a 30-day follow-up drip campaign.
+4.  **Interested but Not Now → 7-Day Follow-Up**: The customer expresses interest but asks to be called back later. The system schedules a 7-day callback and moves the lead to the Drip tab with a shorter follow-up window.
+5.  **Not Interested → Automatic Drip Enrollment**: The AI gracefully ends the call and auto-enrolls the lead into a 30-day follow-up drip campaign.
 
 **Why no Action Required tab?** A separate escalation queue creates a passive workflow where problems accumulate. Inline interrupts ensure Ali addresses issues in real-time while the customer is still on the line.
 

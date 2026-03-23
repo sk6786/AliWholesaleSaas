@@ -4,6 +4,7 @@ stateDiagram-v2
     QUALIFIED --> AI_CALL: Vapi Outbound Call
     
     AI_CALL --> CONVERTED: Order Placed
+    AI_CALL --> CALLBACK: Interested but Not Now
     AI_CALL --> DRIP: Not Interested
     AI_CALL --> ESCALATED: Negative Sentiment
     AI_CALL --> ESCALATED: Credit Limit Exceeded
@@ -12,6 +13,9 @@ stateDiagram-v2
     CONVERTED --> ORDER_CREATED: Create Order
     ORDER_CREATED --> ROUTED: Assign to Truck Route
     ROUTED --> DELIVERED: Delivery Complete
+    
+    CALLBACK --> CALLBACK_FOLLOW_UP: 7-Day Timer
+    CALLBACK_FOLLOW_UP --> AI_CALL: Re-enter Pipeline
     
     DRIP --> FOLLOW_UP: 30-Day Timer
     FOLLOW_UP --> AI_CALL: Re-enter Pipeline

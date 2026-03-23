@@ -868,26 +868,26 @@ export default function WholesaleDashboard() {
                     <div className="bg-white border border-zinc-200 rounded-xl shadow-sm overflow-hidden flex flex-col transition-all">
                       <div className="p-6 border-b border-zinc-100 bg-zinc-50/50 flex justify-between items-center">
                         <span className="text-sm font-bold text-zinc-900">{lastCallOutcome.lead.name}</span>
-                        <StatusPill status={lastCallOutcome.status as any} labelOverride={lastCallOutcome.status === 'Ready' ? 'SUCCESS' : lastCallOutcome.status === 'Drip' ? 'DRIP ENROLLED' : 'ESCALATION'} />
+                        <StatusPill status={lastCallOutcome.status as any} labelOverride={lastCallOutcome.status === 'Ready' ? 'SUCCESS' : lastCallOutcome.status === 'Drip' ? 'DRIP ENROLLED' : lastCallOutcome.status === 'Follow-up' ? 'FOLLOW-UP SCHEDULED' : 'ESCALATION'} />
                       </div>
-                      {lastCallOutcome.status === 'Drip' ? (
+                      {lastCallOutcome.status === 'Drip' || lastCallOutcome.status === 'Follow-up' ? (
                         <div className="p-6">
-                          <div className="bg-blue-50 border border-blue-100 rounded-xl p-5">
+                          <div className={`${lastCallOutcome.status === 'Follow-up' ? 'bg-amber-50 border border-amber-100' : 'bg-blue-50 border border-blue-100'} rounded-xl p-5`}>
                             <div className="flex items-center space-x-2 mb-3">
-                              <Calendar size={14} className="text-blue-600" />
-                              <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Drip Campaign Enrolled</span>
+                              <Calendar size={14} className={lastCallOutcome.status === 'Follow-up' ? 'text-amber-600' : 'text-blue-600'} />
+                              <span className={`text-[10px] font-black uppercase tracking-widest ${lastCallOutcome.status === 'Follow-up' ? 'text-amber-700' : 'text-blue-700'}`}>{lastCallOutcome.status === 'Follow-up' ? 'Follow-Up Scheduled' : 'Drip Campaign Enrolled'}</span>
                             </div>
                             <p className="text-xs text-zinc-700 leading-relaxed mb-3">
-                              Customer is not ready to order now. Automatically enrolled in a 30-day follow-up drip campaign.
+                              {lastCallOutcome.status === 'Follow-up' ? 'Customer is interested but not ready to buy now. A follow-up call has been scheduled for next week.' : 'Customer is not ready to order now. Automatically enrolled in a 30-day follow-up drip campaign.'}
                             </p>
                             <div className="grid grid-cols-2 gap-4 mt-4">
                               <div>
                                 <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Next Outreach</p>
-                                <p className="text-xs font-bold text-blue-700">In 30 days</p>
+                                <p className={`text-xs font-bold ${lastCallOutcome.status === 'Follow-up' ? 'text-amber-700' : 'text-blue-700'}`}>{lastCallOutcome.status === 'Follow-up' ? 'In 7 days' : 'In 30 days'}</p>
                               </div>
                               <div>
                                 <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mb-1">Channel</p>
-                                <p className="text-xs font-bold text-blue-700">Phone + Email</p>
+                                <p className={`text-xs font-bold ${lastCallOutcome.status === 'Follow-up' ? 'text-amber-700' : 'text-blue-700'}`}>{lastCallOutcome.status === 'Follow-up' ? 'Phone Callback' : 'Phone + Email'}</p>
                               </div>
                             </div>
                           </div>
@@ -920,11 +920,11 @@ export default function WholesaleDashboard() {
                             <Truck size={12} /> <span>Accept Order</span>
                           </button>
                         )}
-                        {lastCallOutcome.status === 'Drip' && (
+                        {(lastCallOutcome.status === 'Drip' || lastCallOutcome.status === 'Follow-up') && (
                           <button onClick={() => {
                             setLastCallOutcome(null);
                             setCallPhase('idle');
-                          }} className="w-full py-3 bg-blue-600 text-white rounded-lg font-bold text-[10px] tracking-widest uppercase hover:bg-blue-700 transition-all">Acknowledge</button>
+                          }} className={`w-full py-3 ${lastCallOutcome.status === 'Follow-up' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-lg font-bold text-[10px] tracking-widest uppercase transition-all`}>Acknowledge</button>
                         )}
                         <button onClick={() => setShowTranscriptAudit(true)} className="w-full text-[9px] font-black text-zinc-400 uppercase tracking-widest hover:text-zinc-600 transition-all">View Full Transcript</button>
                       </div>

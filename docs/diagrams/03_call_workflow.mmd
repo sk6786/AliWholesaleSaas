@@ -28,13 +28,19 @@ sequenceDiagram
             D->>A: Override & Approve / Decline buttons
             A->>D: Decides on the spot
         end
-    else Scenario B: Not Interested
-        L->>V: "Not right now, check back later"
+    else Scenario B: Follow Up Later
+        L->>V: "I'm interested but call me back next week"
+        V->>L: "Absolutely! I'll call you back in a week."
+        V->>DB: update_status("Follow-up")
+        V->>DB: schedule_callback(7 days)
+        V->>D: Show Follow-Up Scheduled Card (amber)
+    else Scenario C: Not Interested
+        L->>V: "Not right now, thanks"
         V->>L: "No problem! I'll follow up in 30 days."
         V->>DB: update_status("Drip")
         V->>DB: create_campaign(30-day follow-up)
         V->>D: Show Drip Enrollment Card
-    else Scenario C: Angry/Frustrated
+    else Scenario D: Angry/Frustrated
         L->>V: "I'm very angry about the late delivery!"
         V->>V: Detect negative sentiment
         V->>L: "Hold on, I'm transferring you to my manager."

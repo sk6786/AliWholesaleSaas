@@ -183,6 +183,7 @@ The Vapi AI agent follows a structured workflow for every outbound call. The pro
 |---|---|---|
 | Customer places order, credit OK | Show order summary + "Accept Order" button | Ready → Staged |
 | Customer places order, credit exceeded | Inline orange "Credit Blocked" card with Override/Decline buttons | Credit Review |
+| Customer interested but not now | Amber "Follow-Up Scheduled" card with 7-day callback | Follow-up → Drip |
 | Customer not interested | Show blue "Drip Campaign Enrolled" card with 30-day follow-up date | Drip |
 | Customer angry/frustrated | AI says "transferring to my manager" + "Take Over Call" button | Live Transfer |
 | Price conflict detected | Inline decision card with action buttons | Credit Review |
@@ -337,10 +338,12 @@ Every lead in the system follows a defined lifecycle with clear transitions:
 | NEW | QUALIFIED | Inside 15-mile geofence | PostGIS `ST_DWithin` check |
 | QUALIFIED | AI_CALL | Outbound call triggered | Vapi initiates call |
 | AI_CALL | CONVERTED | Order placed, credit OK | Create order in Supabase |
+| AI_CALL | FOLLOW_UP | Interested but not now | Schedule 7-day callback |
 | AI_CALL | DRIP | Customer not interested | Enroll in 30-day campaign |
 | AI_CALL | ESCALATED | Sentiment/credit/volume trigger | Alert Ali's team |
 | CONVERTED | ROUTED | Assigned to truck route | Route optimization |
 | ROUTED | DELIVERED | Delivery complete | Driver confirms |
+| FOLLOW_UP | AI_CALL | 7-day timer expires | Re-enter pipeline |
 | DRIP | FOLLOW_UP | 30-day timer expires | Re-enter pipeline |
 | ESCALATED | CONVERTED | Ali closes the deal | Manual conversion |
 | ESCALATED | REJECTED | Lead lost | Archive |
@@ -499,9 +502,13 @@ npm run dev
 
 6. **Demo Scenario E (Routing).** After accepting multiple orders, switch to the Fulfillment tab. Show the staged orders, then click **"Generate Routes"** to batch-assign territory-based routes with stop ordering (nearest-neighbor). Show weight tracking against truck capacity. Accept another order, then click **"Refresh"** to show route recalculation when new bakeries are added.
 
-7. **Show the High Margins Filter.** Toggle "HIGH MARGINS ONLY" to demonstrate lead prioritization for wholesaler customers with higher margin potential.
+7. **Show the Territory/Geofence Filter.** Use the territory dropdown to filter leads by geographic area (e.g., select "Mineola" to show only Mineola-area bakeries). This demonstrates the geofence-based prospecting the spec requires.
 
-8. **Show the Transcript Audit.** Click "VIEW FULL TRANSCRIPT" to show the complete call log with timestamps, which provides auditability for compliance.
+8. **Show the High Margins Filter.** Toggle "HIGH MARGINS ONLY" to demonstrate lead prioritization for wholesaler customers with higher margin potential. Show that it works alongside the territory filter.
+
+9. **Show the Drip Outreach Actions.** Switch to the Drip tab and click the **Email**, **SMS**, or **Promo** buttons on a drip lead to demonstrate the follow-up outreach capabilities. Each action shows a confirmation with timestamp, simulating the Zapier-powered email/SMS/promotion workflows.
+
+10. **Show the Transcript Audit.** Click "VIEW FULL TRANSCRIPT" to show the complete call log with timestamps, which provides auditability for compliance.
 
 ### Key Points to Emphasize During Demo
 
@@ -511,3 +518,4 @@ npm run dev
 - The system **protects Ali financially** by blocking orders that exceed credit limits with Override/Decline buttons.
 - The **drip campaign** ensures no lead is forgotten after an initial "no."
 - The **Fulfillment tab** uses a two-phase workflow: stage orders first, then **Generate Routes** in batch. The **Refresh** button recalculates stop ordering when new orders come in.
+- The **territory filter** demonstrates geofence-based prospecting, and the **outreach buttons** (Email/SMS/Promo) show the drip campaign follow-up channels.
