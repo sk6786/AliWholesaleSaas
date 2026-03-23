@@ -99,6 +99,7 @@ export const mockLeads: Lead[] = [
     isWholesaler: true,
     marginPotential: 'High',
     status: 'Drip',
+    nextContactDate: '2026-04-15',
     creditAccount: {
       creditLimit: 15000,
       outstandingBalance: 3000,

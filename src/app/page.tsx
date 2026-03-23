@@ -91,6 +91,7 @@ export default function WholesaleDashboard() {
   const isTakenOverRef = useRef(false);
   const [activeTab, setActiveTab] = useState<'incoming' | 'fulfillment' | 'drip'>('incoming');
   const [routeRefreshKey, setRouteRefreshKey] = useState(0);
+  const [sidebarPage, setSidebarPage] = useState<'dashboard' | 'leads' | 'routes' | 'analytics'>('dashboard');
 
   useEffect(() => {
     if (toast) {
@@ -403,8 +404,8 @@ export default function WholesaleDashboard() {
             <span className="text-white font-bold tracking-tight text-xl">ALI WHOLESALE</span>
           </div>
           <nav className="space-y-1">
-            {[{ l: 'Dashboard', i: LayoutDashboard, a: true }, { l: 'Leads', i: Users }, { l: 'Routes', i: MapIcon }, { l: 'Analytics', i: TrendingUp }].map(item => (
-              <button key={item.l} className={`flex items-center space-x-3 px-4 py-3 w-full rounded-xl transition-all ${item.a ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800/50'}`}>
+            {[{ l: 'Dashboard', i: LayoutDashboard, k: 'dashboard' as const }, { l: 'Leads', i: Users, k: 'leads' as const }, { l: 'Routes', i: MapIcon, k: 'routes' as const }, { l: 'Analytics', i: TrendingUp, k: 'analytics' as const }].map(item => (
+              <button key={item.l} onClick={() => setSidebarPage(item.k)} className={`flex items-center space-x-3 px-4 py-3 w-full rounded-xl transition-all ${sidebarPage === item.k ? 'bg-zinc-800 text-white' : 'hover:bg-zinc-800/50'}`}>
                 <item.i size={18} /> <span className="text-sm font-semibold">{item.l}</span>
               </button>
             ))}
@@ -420,14 +421,54 @@ export default function WholesaleDashboard() {
         {/* Header */}
         <header className="h-16 border-b border-zinc-200 flex items-center justify-between px-10">
           <div>
-            <h1 className="text-sm font-black text-zinc-900 uppercase italic">Western Long Island</h1>
-            <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">Mineola Hub Cluster</p>
+            <h1 className="text-sm font-black text-zinc-900 uppercase italic">{sidebarPage === 'dashboard' ? 'Western Long Island' : sidebarPage === 'leads' ? 'Lead Pipeline' : sidebarPage === 'routes' ? 'Route Management' : 'Analytics & Insights'}</h1>
+            <p className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest">{sidebarPage === 'dashboard' ? 'Mineola Hub Cluster' : sidebarPage === 'leads' ? 'All Territories' : sidebarPage === 'routes' ? 'Fleet Operations' : 'Performance Metrics'}</p>
           </div>
-          <button onClick={() => setHighMarginOnly(!highMarginOnly)} className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest ${highMarginOnly ? 'bg-amber-50 border-amber-200 text-amber-600' : 'border-zinc-200 text-zinc-400'}`}>
-            <TrendingUp size={12} /> <span>High Margins Only</span>
-          </button>
+          {sidebarPage === 'dashboard' && (
+            <button onClick={() => setHighMarginOnly(!highMarginOnly)} className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg border text-[9px] font-black uppercase tracking-widest ${highMarginOnly ? 'bg-amber-50 border-amber-200 text-amber-600' : 'border-zinc-200 text-zinc-400'}`}>
+              <TrendingUp size={12} /> <span>High Margins Only</span>
+            </button>
+          )}
         </header>
 
+        {/* Placeholder Pages */}
+        {sidebarPage !== 'dashboard' && (
+          <main className="flex-1 flex items-center justify-center bg-zinc-50">
+            <div className="text-center max-w-lg px-8">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-2xl bg-zinc-100 border border-zinc-200 flex items-center justify-center">
+                {sidebarPage === 'leads' && <Users size={28} className="text-zinc-400" />}
+                {sidebarPage === 'routes' && <MapIcon size={28} className="text-zinc-400" />}
+                {sidebarPage === 'analytics' && <TrendingUp size={28} className="text-zinc-400" />}
+              </div>
+              <h2 className="text-lg font-black text-zinc-900 mb-2">
+                {sidebarPage === 'leads' && 'Full Lead Pipeline'}
+                {sidebarPage === 'routes' && 'Route Optimization Dashboard'}
+                {sidebarPage === 'analytics' && 'Call & Revenue Analytics'}
+              </h2>
+              <p className="text-sm text-zinc-500 mb-6 leading-relaxed">
+                {sidebarPage === 'leads' && 'Complete lead management with Google Maps scraper integration, PostGIS geofence visualization, and pipeline stages from NEW through CONVERTED. Includes bulk import, deduplication, and territory assignment.'}
+                {sidebarPage === 'routes' && 'Full vehicle routing with Google Maps API integration, real-time driver tracking, multi-territory management, and automated manifest generation. Includes drag-and-drop stop reordering and capacity optimization.'}
+                {sidebarPage === 'analytics' && 'Conversion funnel metrics, revenue per route, AI call success rates, drip campaign performance, and credit utilization dashboards. Includes daily/weekly/monthly trend analysis and territory comparisons.'}
+              </p>
+              <div className="inline-flex items-center space-x-2 bg-zinc-100 border border-zinc-200 rounded-xl px-4 py-2.5">
+                <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
+                  {sidebarPage === 'leads' && 'Roadmap: Phase 1-2 (Months 1-2)'}
+                  {sidebarPage === 'routes' && 'Roadmap: Phase 4 (Month 5)'}
+                  {sidebarPage === 'analytics' && 'Roadmap: Phase 5 (Month 6)'}
+                </span>
+              </div>
+              <div className="mt-6">
+                <button onClick={() => setSidebarPage('dashboard')} className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-800 transition-colors">
+                  ← Back to Dashboard
+                </button>
+              </div>
+            </div>
+          </main>
+        )}
+
+        {/* Dashboard Content */}
+        {sidebarPage === 'dashboard' && (
         <main className="flex-1 flex divide-x divide-zinc-200 bg-white overflow-hidden">
           {/* LEFT PANEL: Tabs (Incoming / Fulfillment / Drip) */}
           <section className="flex-1 flex flex-col bg-zinc-50/30">
@@ -852,6 +893,7 @@ export default function WholesaleDashboard() {
             </div>
           </section>
         </main>
+        )}
 
         {/* Toast */}
         {toast && (
