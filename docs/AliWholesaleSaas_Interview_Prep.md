@@ -181,7 +181,7 @@ The Vapi AI agent follows a structured workflow for every outbound call. The pro
 
 | Call Outcome | Dashboard Action | Lead Status |
 |---|---|---|
-| Customer places order, credit OK | Show order summary + "Accept & Route to Fulfillment" button | Ready |
+| Customer places order, credit OK | Show order summary + "Accept Order" button | Ready → Staged |
 | Customer places order, credit exceeded | Inline orange "Credit Blocked" card with Override/Decline buttons | Credit Review |
 | Customer not interested | Show blue "Drip Campaign Enrolled" card with 30-day follow-up date | Drip |
 | Customer angry/frustrated | AI says "transferring to my manager" + "Take Over Call" button | Live Transfer |
@@ -203,8 +203,8 @@ The Vapi AI agent follows a structured workflow for every outbound call. The pro
 5. The AI confirms: "Got it. 100lb **Cinnamon** and 50lb **Nuts** recorded. We'll see you tomorrow."
 6. The system runs a credit check: $3,275 remaining on a $5,000 limit. Credit status shows green "Verified."
 7. The summary card shows: Order (50lb Sesame Seeds + 25lb Poppy Seeds), Total Payload (~75 lbs), Est. Margin (22.0%).
-8. A green **"Accept & Route to Fulfillment"** button appears.
-9. Clicking it moves the order directly into the **Fulfillment tab** with automatic route assignment, stop number, and weight tracking.
+8. A green **"Accept Order"** button appears.
+9. Clicking it stages the order in the **Fulfillment tab** with a "STAGED" badge. Ali can then click **"Generate Routes"** to batch-assign territory-based routes with stop ordering.
 
 **What This Demonstrates:** End-to-end flow from AI call to order creation to fulfillment routing. Real-time transcript streaming with keyword highlighting. Credit verification with remaining balance display. One-click handoff from sales to delivery.
 
@@ -257,14 +257,14 @@ The Vapi AI agent follows a structured workflow for every outbound call. The pro
 **Setup:** Multiple orders have been confirmed and need to be assigned to delivery routes.
 
 **Flow:**
-1. After accepting orders via the "Accept & Route to Fulfillment" button, orders automatically flow into the **Fulfillment tab**.
-2. The Fulfillment tab shows a header with route count and stop count (e.g., "1 ROUTE • 2 STOPS") and a **"Refresh Routes"** button.
-3. Orders are automatically grouped by territory (Mineola Loop, Garden City Loop) with stop numbers assigned using a **nearest-neighbor algorithm** starting from HQ.
+1. After clicking **"Accept Order"** on each call summary, orders are staged in the **Fulfillment tab** with a "STAGED" badge.
+2. Ali clicks **"Generate Routes"** to batch-assign all staged orders to territory-based routes. The tab then shows route count and stop count (e.g., "1 ROUTE • 2 STOPS").
+3. Orders are grouped by territory (Mineola Loop, Garden City Loop) with stop numbers assigned using a **nearest-neighbor algorithm** starting from HQ.
 4. Each route card shows: stop number, bakery name, items ordered, weight, and the route's cumulative weight against the 2,500 lb truck capacity.
-5. The Route Overview panel on the right mirrors the same information.
-6. When a new bakery is added to a route, Ali clicks **"Refresh Routes"** to recalculate the optimal stop ordering across all stops.
+5. When new orders are accepted and staged, Ali clicks **"Refresh"** to recalculate the optimal stop ordering across all stops.
+6. The right panel is exclusively the Vapi Logic HUD — no redundant Route Overview panel.
 
-**What This Demonstrates:** Automatic territory-based route grouping. Nearest-neighbor stop ordering that tells Ali which bakery to visit first. Truck capacity tracking (2,500 lbs max). The Refresh Routes button enables dynamic route recalculation as new orders come in throughout the day.
+**What This Demonstrates:** Two-phase fulfillment workflow: stage first, then generate routes in batch. Territory-based route grouping with nearest-neighbor stop ordering that tells Ali which bakery to visit first. Truck capacity tracking (2,500 lbs max). The Refresh button enables dynamic route recalculation as new orders come in throughout the day.
 
 ---
 
@@ -292,7 +292,7 @@ The key insight is that **AI should handle the 80% of calls that are routine, so
 
 - **Angry customer?** Ali sees a "Take Over Call" button immediately — the customer hears "I'm transferring you to my manager" and Ali picks up within seconds.
 - **Credit exceeded?** Ali sees the financial breakdown with Override/Decline buttons right in the HUD — he decides before the call context is lost.
-- **Successful order?** One click routes it to Fulfillment with automatic stop ordering.
+- **Successful order?** One click stages it in Fulfillment. Ali clicks "Generate Routes" to batch-assign routes with stop ordering.
 
 The dashboard has three tabs: **Incoming** (leads to call), **Fulfillment** (accepted orders with route optimization), and **Drip** (nurture pipeline). No dead-letter queue needed.
 
@@ -466,7 +466,7 @@ A: In the prototype, I mock: AI call transcripts (structured scripts instead of 
 
 **Q: How would you keep this usable for non-technical operations staff?**
 
-A: The dashboard is designed for Ali, not for engineers. Every action is one click: call a lead (phone icon), take over a call (Take Over Call button), approve or decline a blocked order (inline buttons), accept and route an order (Accept & Route button). Status is communicated through color-coded pills and inline cards. Financial data is shown in plain numbers, not database fields. Critically, there is no separate "Action Required" tab — all escalations appear as inline interrupts in the Vapi HUD so Ali acts in real-time. The system should feel like a command center, not a developer tool.
+A: The dashboard is designed for Ali, not for engineers. Every action is one click: call a lead (phone icon), take over a call (Take Over Call button), approve or decline a blocked order (inline buttons), accept an order (Accept Order button), batch-generate routes (Generate Routes button). Status is communicated through color-coded pills and inline cards. Financial data is shown in plain numbers, not database fields. Critically, there is no separate "Action Required" tab — all escalations appear as inline interrupts in the Vapi HUD so Ali acts in real-time. The system should feel like a command center, not a developer tool.
 
 **Q: How would credit-limit handling work safely?**
 
@@ -487,9 +487,9 @@ npm run dev
 
 ### Demo Script (Recommended Order)
 
-1. **Show the Dashboard Layout.** Point out the three-panel design: left sidebar (navigation), center panel (lead pipeline with tabs), right panel (Vapi Logic HUD + Fulfillment).
+1. **Show the Dashboard Layout.** Point out the clean two-panel design: left panel (sidebar navigation + lead pipeline with Incoming/Fulfillment/Drip tabs), right panel (Vapi Logic HUD only). Explain why there is no redundant Route Overview panel — all routing lives in the Fulfillment tab.
 
-2. **Demo Scenario A (Interested Lead).** Call Sunrise Artisan Bakery. Walk through: connecting animation, transcript streaming with keyword highlighting, credit verification, order summary, and route assignment to Mineola Loop.
+2. **Demo Scenario A (Interested Lead).** Call Sunrise Artisan Bakery. Walk through: connecting animation, transcript streaming with keyword highlighting, credit verification, order summary, and clicking "Accept Order" to stage it in Fulfillment.
 
 3. **Demo Scenario B (Drip Enrollment).** Call Old World Bakery. Show: the "not interested" conversation, automatic drip enrollment card, 30-day follow-up date, and the lead appearing in the Drip tab.
 
@@ -497,7 +497,7 @@ npm run dev
 
 5. **Demo Scenario D (Credit Limit).** Call Bellmore Bread House. Show: the order conversation, inline orange "Credit Blocked" card with financial breakdown, and the Override/Decline buttons. Emphasize that Ali decides on the spot without switching tabs.
 
-6. **Demo Scenario E (Routing).** After accepting orders, switch to the Fulfillment tab. Show: territory-based routes with stop ordering (nearest-neighbor), weight tracking against truck capacity, and the **Refresh Routes** button that recalculates stop order when new bakeries are added.
+6. **Demo Scenario E (Routing).** After accepting multiple orders, switch to the Fulfillment tab. Show the staged orders, then click **"Generate Routes"** to batch-assign territory-based routes with stop ordering (nearest-neighbor). Show weight tracking against truck capacity. Accept another order, then click **"Refresh"** to show route recalculation when new bakeries are added.
 
 7. **Show the High Margins Filter.** Toggle "HIGH MARGINS ONLY" to demonstrate lead prioritization for wholesaler customers with higher margin potential.
 
@@ -510,4 +510,4 @@ npm run dev
 - The system uses **inline interrupts, not a separate queue** — Ali acts in real-time while the customer is still on the line.
 - The system **protects Ali financially** by blocking orders that exceed credit limits with Override/Decline buttons.
 - The **drip campaign** ensures no lead is forgotten after an initial "no."
-- The **Fulfillment tab** with **Refresh Routes** tells Ali exactly which stop to visit first and recalculates when new orders come in.
+- The **Fulfillment tab** uses a two-phase workflow: stage orders first, then **Generate Routes** in batch. The **Refresh** button recalculates stop ordering when new orders come in.

@@ -33,7 +33,8 @@ graph TD
     subgraph "Ali's Command Center"
         C -->|Live Transfer| G[Ali Takes Over Call]
         C -->|Credit Block| G2[Inline Override/Decline]
-        F -->|Accept & Route| H2[Fulfillment Queue]
+        F -->|Accept Order| H2[Staged in Fulfillment]
+        H2 -->|Generate Routes| H3[Route Assignment]
     end
 
     subgraph "Logistics & Routing"
@@ -61,7 +62,7 @@ sequenceDiagram
             S-->>V: Approved
             V->>L: "Order Confirmed. Expect delivery on Tuesday."
             V->>S: create_order()
-            V->>A: Summary Card (Accept & Route to Fulfillment)
+            V->>A: Summary Card (Accept Order)
         else Over Limit
             S-->>V: Denied
             V->>A: Inline Credit Block Card (Override / Decline)
@@ -98,7 +99,7 @@ The dashboard is designed for **Ali** (the human operator), not the AI agent. Ra
 
 1.  **Angry Customer → Live Transfer**: When the AI detects negative sentiment, it tells the customer *"Hold on, I'm transferring you to my manager"* and presents Ali with a pulsing **"Take Over Call"** button in the Vapi HUD. Ali picks up immediately — no tab-switching, no delay.
 2.  **Credit Limit Exceeded → Inline Decision Card**: The HUD shows the financial breakdown (credit limit, outstanding balance, order amount, new total) with two action buttons: **"Override & Approve Order"** or **"Decline Order."** Ali decides on the spot.
-3.  **Successful Order → Accept & Route to Fulfillment**: Orders flow directly into the Fulfillment tab with automatic route assignment and stop ordering.
+3.  **Successful Order → Accept Order → Staged**: Orders are staged in the Fulfillment tab. Ali clicks **"Generate Routes"** to batch-assign territory-based routes with nearest-neighbor stop ordering. A **"Refresh"** button recalculates when new orders are added.
 4.  **Not Interested → Automatic Drip Enrollment**: The AI gracefully ends the call and auto-enrolls the lead into a 30-day follow-up drip campaign.
 
 **Why no Action Required tab?** A separate escalation queue creates a passive workflow where problems accumulate. Inline interrupts ensure Ali addresses issues in real-time while the customer is still on the line.
@@ -125,7 +126,7 @@ The dashboard uses three focused tabs:
 | Tab | Purpose | Content |
 |---|---|---|
 | **Incoming** | Leads waiting to be called | Lead cards with phone buttons, predicted volume, territory |
-| **Fulfillment** | Accepted orders ready for delivery | Route cards with stop ordering, weight tracking, refresh button |
+| **Fulfillment** | Accepted orders staged and routed | Staged orders awaiting routing, Generate Routes button, route cards with stop ordering, weight tracking, Refresh button |
 | **Drip** | Leads enrolled in follow-up campaigns | Lead cards with next contact date and channel |
 
 ---

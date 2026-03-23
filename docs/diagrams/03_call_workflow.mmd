@@ -17,9 +17,11 @@ sequenceDiagram
             DB-->>V: Approved ($3,275 remaining)
             V->>L: "Order confirmed for tomorrow"
             V->>DB: create_order()
-            V->>D: Summary + Accept & Route to Fulfillment
-            A->>D: Clicks Accept & Route
-            D->>D: Order flows to Fulfillment tab
+            V->>D: Summary + Accept Order button
+            A->>D: Clicks Accept Order
+            D->>D: Order staged in Fulfillment tab
+            A->>D: Clicks Generate Routes
+            D->>D: Routes assigned with stop ordering
         else Credit Exceeded
             DB-->>V: DENIED (over limit)
             V->>D: Inline Credit Blocked Card

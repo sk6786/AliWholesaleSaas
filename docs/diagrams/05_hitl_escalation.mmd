@@ -18,8 +18,8 @@ flowchart TD
     K -->|"Override"| J
     K -->|"Decline"| N["Order Rejected"]
     
-    J --> L["Accept & Route<br/>to Fulfillment"]
-    L --> O["Fulfillment Tab<br/>Stop Ordering + Refresh"]
+    J --> L["Accept Order<br/>→ Staged"]
+    L --> O["Generate Routes<br/>Stop Ordering + Refresh"]
 
     M{"Multi-Location<br/>or Chain?"} --> F
     D --> M
